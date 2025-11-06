@@ -106,8 +106,8 @@ export const CaptureInput: React.FC<CaptureInputProps> = ({ onNewIdea, isProcess
   };
   
   return (
-    <div className="p-4 md:p-6">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 p-4">
+    <div className="p-4 md:p-0">
+        <div className="bg-white dark:bg-stone-900 rounded-xl border border-stone-200 dark:border-stone-800 p-4">
              <form onSubmit={handleSubmit}>
                 <textarea
                     ref={textAreaRef}
@@ -115,7 +115,7 @@ export const CaptureInput: React.FC<CaptureInputProps> = ({ onNewIdea, isProcess
                     onChange={(e) => setText(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder={isRecording ? "Listening..." : "What's on your mind? Type or record your idea..."}
-                    className="w-full px-2 py-1 bg-transparent focus:outline-none text-gray-900 dark:text-gray-100 placeholder-gray-400 resize-none"
+                    className="w-full px-2 py-1 bg-transparent focus:outline-none text-stone-900 dark:text-stone-100 placeholder-stone-400 dark:placeholder-stone-500 resize-none text-lg"
                     rows={4}
                     disabled={isProcessing}
                 />
@@ -125,23 +125,23 @@ export const CaptureInput: React.FC<CaptureInputProps> = ({ onNewIdea, isProcess
                             type="button"
                             onClick={handleToggleRecording}
                             disabled={isProcessing}
-                            className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-colors duration-200 ${
+                            className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors duration-200 ${
                             isRecording 
                                 ? 'bg-red-500 hover:bg-red-600 text-white animate-pulse-fast' 
-                                : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300'
+                                : 'bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 hover:bg-stone-100 dark:hover:bg-stone-700 text-stone-600 dark:text-stone-300'
                             }`}
                             aria-label={isRecording ? 'Stop recording' : 'Record Voice'}
                         >
                             {isRecording ? <StopIcon className="w-4 h-4" /> : <MicIcon className="w-4 h-4" />}
                             <span>{isRecording ? 'Stop' : 'Record Voice'}</span>
                         </button>
-                        <span className="text-xs text-gray-500 dark:text-gray-400">Press <kbd className="font-sans border rounded px-1.5 py-0.5 border-gray-300 dark:border-gray-600">Cmd</kbd> + <kbd className="font-sans border rounded px-1.5 py-0.5 border-gray-300 dark:border-gray-600">Enter</kbd> to save</span>
+                        <span className="text-xs text-stone-500 dark:text-stone-400">Press <kbd className="font-sans border rounded px-1.5 py-0.5 border-stone-200 dark:border-stone-600 bg-stone-50 dark:bg-stone-800 text-stone-600 dark:text-stone-400">Cmd</kbd> + <kbd className="font-sans border rounded px-1.5 py-0.5 border-stone-200 dark:border-stone-600 bg-stone-50 dark:bg-stone-800 text-stone-600 dark:text-stone-400">Enter</kbd> to save</span>
                     </div>
                    
                     <button
                         type="submit"
                         disabled={!text.trim() || isProcessing || isRecording}
-                        className="px-6 py-2 rounded-md bg-green-600 text-white font-semibold hover:bg-green-700 transition-colors duration-200 disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:cursor-not-allowed"
+                        className="px-6 py-2 rounded-lg bg-sage text-white font-semibold hover:brightness-105 transition-all duration-200 disabled:bg-stone-300 dark:disabled:bg-stone-600 disabled:cursor-not-allowed"
                         aria-label="Capture Idea"
                     >
                         Capture Idea

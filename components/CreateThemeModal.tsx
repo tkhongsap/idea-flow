@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 
 interface CreateThemeModalProps {
@@ -22,8 +21,8 @@ export const CreateThemeModal: React.FC<CreateThemeModalProps> = ({ isOpen, onCl
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
-        <h2 className="text-xl font-bold mb-4 text-gray-800 dark:text-gray-100">Create a New Theme</h2>
+      <div className="bg-white dark:bg-stone-900 rounded-xl shadow-xl p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+        <h2 className="text-xl font-bold mb-4 text-stone-800 dark:text-stone-100">Create a New Theme</h2>
         <form onSubmit={handleSubmit}>
           <label htmlFor="theme-title" className="sr-only">Theme Title</label>
           <input
@@ -32,21 +31,21 @@ export const CreateThemeModal: React.FC<CreateThemeModalProps> = ({ isOpen, onCl
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Enter theme title..."
-            className="w-full px-4 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary text-gray-900 dark:text-gray-100"
+            className="w-full px-4 py-2 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-sage text-stone-900 dark:text-stone-100"
             autoFocus
           />
           <div className="mt-6 flex justify-end gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors"
+              className="px-4 py-2 bg-stone-100 dark:bg-stone-800 text-stone-800 dark:text-stone-200 rounded-lg hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={!title.trim()}
-              className="px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-secondary transition-colors disabled:bg-gray-400 dark:disabled:bg-gray-500"
+              className="px-4 py-2 bg-sage text-white rounded-lg hover:brightness-105 transition-all disabled:bg-stone-400 dark:disabled:bg-stone-500"
             >
               Create
             </button>

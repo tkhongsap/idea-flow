@@ -30,31 +30,12 @@ export const IdeasList: React.FC<IdeasListProps> = ({
     : [...ideas].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
   return (
-    <div className="p-4 md:p-6">
-      {!isSearching && (
-         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
-            Recent Ideas 
-            <span className="px-2 py-0.5 text-sm bg-gray-200 dark:bg-gray-700 rounded-full">{ideas.length}</span>
-          </h2>
-          <div className="flex items-center gap-2">
-            <select className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary">
-              <option>All Sources</option>
-              <option>Text</option>
-              <option>Voice</option>
-            </select>
-            <select className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary">
-              <option>Most Recent</option>
-              <option>Oldest</option>
-            </select>
-          </div>
-        </div>
-      )}
+    <div className="p-4 md:p-0">
       <div className="space-y-4">
         {displayedIdeas.length === 0 ? (
-           <div className="text-center py-16 text-gray-500 dark:text-gray-400">
-             <h3 className="text-lg font-semibold">{isSearching ? 'No ideas found' : 'No ideas yet!'}</h3>
-             <p>{isSearching ? 'Your search did not match any ideas.' : 'Use the input above to capture your first thought.'}</p>
+           <div className="text-center py-20 px-6 bg-white dark:bg-stone-900/50 border-2 border-dashed border-stone-300 dark:border-stone-700 rounded-xl">
+             <h3 className="text-lg font-semibold text-stone-700 dark:text-stone-300">{isSearching ? 'No ideas found' : 'No ideas yet'}</h3>
+             <p className="text-stone-500 dark:text-stone-400 mt-1">{isSearching ? 'Your search did not match any ideas.' : 'Start capturing your thoughts using the quick capture above. Your ideas will appear here and be automatically organized into themes.'}</p>
            </div>
         ) : (
             displayedIdeas.map(idea => (

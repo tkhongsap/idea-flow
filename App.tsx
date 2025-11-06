@@ -4,11 +4,11 @@ import { organizeIdeas, semanticSearch } from './services/geminiService';
 import { CaptureInput } from './components/CaptureInput';
 import { ThemeList } from './components/ThemeList';
 import { ThemeDetail } from './components/ThemeDetail';
-import { BrainIcon } from './components/icons/BrainIcon';
 import { CreateThemeModal } from './components/CreateThemeModal';
 import { IdeasList } from './components/IdeasList';
 import { SearchIcon } from './components/icons/SearchIcon';
 import { XIcon } from './components/icons/XIcon';
+import { LightbulbIcon } from './components/icons/LightbulbIcon';
 
 
 type View = 'ideas' | 'themes';
@@ -305,7 +305,7 @@ const App: React.FC = () => {
                         />
                     }
                     {(searchResults.ideaIds.length === 0 && searchResults.themeIds.length === 0) && (
-                        <div className="text-center py-16 text-gray-500 dark:text-gray-400">
+                        <div className="text-center py-16 text-stone-500 dark:text-stone-400">
                           <h3 className="text-lg font-semibold">No results found</h3>
                           <p>Try a different search query.</p>
                         </div>
@@ -348,10 +348,10 @@ const App: React.FC = () => {
     }> = ({ targetView, label }) => (
         <button
             onClick={() => setView(targetView)}
-            className={`px-4 py-2 text-sm font-medium rounded-md ${
+            className={`px-4 py-2 text-sm font-medium rounded-md font-sans ${
                 view === targetView 
-                ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm' 
-                : 'text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800'
+                ? 'bg-white dark:bg-stone-700 text-stone-900 dark:text-stone-100 shadow-sm' 
+                : 'text-stone-500 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-800'
             }`}
         >
             {label}
@@ -359,25 +359,25 @@ const App: React.FC = () => {
     );
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 font-sans text-gray-900 dark:text-gray-100">
-            <header className="p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 sticky top-0 z-10 backdrop-blur-sm">
+        <div className="min-h-screen bg-stone-50 dark:bg-stone-900 font-sans text-stone-900 dark:text-stone-100">
+            <header className="p-4 border-b border-stone-200 dark:border-stone-700 bg-white/80 dark:bg-stone-800/50 sticky top-0 z-10 backdrop-blur-sm">
                 <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
-                        <BrainIcon className="w-8 h-8 text-brand-primary" />
+                        <LightbulbIcon className="w-8 h-8 text-brand-primary" />
                         <div>
-                             <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">IdeaFlow</h1>
-                             <p className="text-sm text-gray-500 dark:text-gray-400">Capture your thoughts, organize your ideas</p>
+                             <h1 className="text-xl font-bold text-stone-800 dark:text-stone-100">IdeaFlow</h1>
+                             <p className="text-sm text-stone-500 dark:text-stone-400 font-sans">Capture your thoughts, organize your ideas</p>
                         </div>
                     </div>
                     <form onSubmit={handleSearch} className="relative w-full max-w-xs">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                            {isSearching ? (
-                                <svg className="animate-spin h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <svg className="animate-spin h-5 w-5 text-stone-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                 </svg>
                             ) : (
-                                <SearchIcon className="w-5 h-5 text-gray-400" />
+                                <SearchIcon className="w-5 h-5 text-stone-400" />
                             )}
                         </div>
                         <input
@@ -386,15 +386,15 @@ const App: React.FC = () => {
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             placeholder="Semantic Search..."
-                            className="w-full bg-gray-100 dark:bg-gray-700 border border-transparent rounded-md pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent"
+                            className="w-full bg-stone-100 dark:bg-stone-700 border border-transparent rounded-md pl-10 pr-4 py-2 text-sm font-sans focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent"
                         />
                         <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
                             {searchQuery ? (
-                                <button type="button" onClick={clearSearch} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                                <button type="button" onClick={clearSearch} className="text-stone-400 hover:text-stone-600 dark:hover:text-stone-300">
                                     <XIcon className="w-5 h-5" />
                                 </button>
                             ) : (
-                                <kbd className="inline-flex items-center border border-gray-300 dark:border-gray-500 rounded px-2 text-sm font-sans font-medium text-gray-400 dark:text-gray-400">⌘K</kbd>
+                                <kbd className="inline-flex items-center border border-stone-300 dark:border-stone-500 rounded px-2 text-sm font-sans font-medium text-stone-400 dark:text-stone-400">⌘K</kbd>
                             )}
                         </div>
                     </form>
@@ -406,7 +406,7 @@ const App: React.FC = () => {
 
                 {!searchResults && (
                     <div className="px-4 md:px-6">
-                        <div className="inline-flex items-center bg-gray-200 dark:bg-gray-800 p-1 rounded-lg">
+                        <div className="inline-flex items-center bg-stone-200 dark:bg-stone-800 p-1 rounded-lg">
                             <TabButton targetView="ideas" label="Ideas" />
                             <TabButton targetView="themes" label="Themes" />
                         </div>

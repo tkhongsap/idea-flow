@@ -1,25 +1,39 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IdeaFlow - Personal Brain Dump & Organizer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
             theme: {
                 extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
                     colors: {
-                        'brand-primary': '#4f46e5',
-                        'brand-secondary': '#7c3aed',
-                        'gray-900': '#111827',
-                        'gray-800': '#1f2937',
-                        'gray-700': '#374151',
-                        'gray-600': '#4b5563',
-                        'gray-300': '#d1d5db',
-                        'gray-100': '#f3f4f6',
+                        'cream': '#F8F5F2',
+                        'sage': '#A3B18A', // Lighter, more muted green
+                        
+                        'stone-50': '#fafaf9',
+                        'stone-100': '#f5f5f4',
+                        'stone-200': '#e7e5e4',
+                        'stone-300': '#d6d3d1',
+                        'stone-400': '#a8a29e',
+                        'stone-500': '#78716c',
+                        'stone-600': '#57534e',
+                        'stone-700': '#44403c',
+                        'stone-800': '#292524',
+                        'stone-900': '#1c1917',
+                        'stone-950': '#11100f',
+                    },
+                    borderRadius: {
+                        'xl': '0.75rem',
                     },
                     animation: {
                         'pulse-fast': 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
@@ -39,7 +53,7 @@
 }
 </script>
 </head>
-<body class="bg-gray-100 dark:bg-gray-900">
+<body class="bg-cream dark:bg-stone-950">
     <div id="root"></div>
 </body>
 </html>
