@@ -24,6 +24,64 @@ const SuggestionChip: React.FC<{ text: string, onClick: (text: string) => void }
     </button>
 );
 
+const FormattedContent: React.FC<{ text: string }> = ({ text }) => {
+    // This function handles inline formatting like **bold**.
+    const processInlineFormatting = (line: string): React.ReactNode => {
+        const parts = line.split(/(\*\*.*?\*\*)/g).filter(part => part);
+        return parts.map((part, index) => {
+            if (part.startsWith('**') && part.endsWith('**')) {
+                return <strong key={index}>{part.slice(2, -2)}</strong>;
+            }
+            return part;
+        });
+    };
+    
+    const lines = text.split('\n');
+    const elements: React.ReactNode[] = [];
+    let currentListItems: React.ReactNode[] = [];
+    let listType: 'ul' | 'ol' | null = null;
+    
+    // Helper to push the current list to the main elements array
+    const flushList = () => {
+        if (currentListItems.length > 0) {
+            const listKey = `list-${elements.length}`;
+            const className = "list-inside space-y-1 my-2 pl-4";
+            if (listType === 'ul') {
+                elements.push(<ul key={listKey} className={`list-disc ${className}`}>{currentListItems}</ul>);
+            } else if (listType === 'ol') {
+                elements.push(<ol key={listKey} className={`list-decimal ${className}`}>{currentListItems}</ol>);
+            }
+            currentListItems = [];
+            listType = null;
+        }
+    };
+    
+    lines.forEach((line, index) => {
+        const olMatch = line.match(/^\s*\d+\.\s+(.*)/);
+        const ulMatch = line.match(/^\s*\*\s+(.*)/);
+        
+        if (olMatch) {
+            if (listType !== 'ol') flushList(); // New list type, so flush old one
+            listType = 'ol';
+            currentListItems.push(<li key={index}>{processInlineFormatting(olMatch[1])}</li>);
+        } else if (ulMatch) {
+            if (listType !== 'ul') flushList(); // New list type, so flush old one
+            listType = 'ul';
+            // Treat nested lists as top-level for simplicity
+            currentListItems.push(<li key={index}>{processInlineFormatting(ulMatch[1])}</li>);
+        } else {
+            flushList(); // End of a list, flush it
+            if (line.trim()) {
+                elements.push(<p key={index} className="my-1">{processInlineFormatting(line)}</p>);
+            }
+        }
+    });
+    
+    flushList(); // Flush any list that is at the end of the text
+    
+    return <>{elements}</>;
+};
+
 const ChatInterface: React.FC<{ theme: Theme }> = ({ theme }) => {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [input, setInput] = useState('');
@@ -174,8 +232,8 @@ const ChatInterface: React.FC<{ theme: Theme }> = ({ theme }) => {
                 {messages.map((msg, index) => (
                     <div key={index} className={`flex items-start gap-3 w-full ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                          {msg.role === 'model' && <div className="flex-shrink-0 w-8 h-8 rounded-full bg-sage text-white flex items-center justify-center"><BrainIcon className="w-5 h-5"/></div>}
-                         <div className={`max-w-xl p-3 rounded-xl whitespace-pre-wrap ${msg.role === 'user' ? 'bg-sage text-white' : 'bg-white dark:bg-stone-800 text-stone-800 dark:text-stone-200 border border-stone-200 dark:border-stone-700/80'}`}>
-                            {msg.content}
+                         <div className={`max-w-xl p-3 rounded-xl ${msg.role === 'user' ? 'bg-sage text-white whitespace-pre-wrap' : 'bg-white dark:bg-stone-800 text-stone-800 dark:text-stone-200 border border-stone-200 dark:border-stone-700/80'}`}>
+                            {msg.role === 'model' ? <FormattedContent text={msg.content} /> : msg.content}
                         </div>
                         {msg.role === 'user' && <div className="flex-shrink-0 w-8 h-8 rounded-full bg-stone-200 dark:bg-stone-700 text-stone-600 dark:text-stone-300 flex items-center justify-center"><UserIcon className="w-5 h-5"/></div>}
                     </div>
