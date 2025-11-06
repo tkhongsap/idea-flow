@@ -9,6 +9,7 @@ interface ThemeDetailProps {
   theme: Theme;
   rawIdeas: RawIdea[];
   onBack: () => void;
+  onAddIdeaAtom: (themeId: string, content: string) => void;
 }
 
 const ChatInterface: React.FC<{ theme: Theme }> = ({ theme }) => {
@@ -87,8 +88,22 @@ const ChatInterface: React.FC<{ theme: Theme }> = ({ theme }) => {
     );
 };
 
-export const ThemeDetail: React.FC<ThemeDetailProps> = ({ theme, rawIdeas, onBack }) => {
-    const getRawIdeaContent = (id: string) => rawIdeas.find(idea => idea.id === id)?.content || 'Original idea not found.';
+export const ThemeDetail: React.FC<ThemeDetailProps> = ({ theme, rawIdeas, onBack, onAddIdeaAtom }) => {
+    const getRawIdeaContent = (id: string) => {
+        if (id.startsWith('manual-')) {
+            return "Manually added idea.";
+        }
+        return rawIdeas.find(idea => idea.id === id)?.content || 'Original idea not found.';
+    }
+    const [newAtomContent, setNewAtomContent] = useState('');
+
+    const handleAddAtomSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (newAtomContent.trim()) {
+            onAddIdeaAtom(theme.id, newAtomContent.trim());
+            setNewAtomContent('');
+        }
+    };
     
     return (
         <div className="p-4 md:p-6 text-gray-900 dark:text-gray-100">
@@ -124,6 +139,9 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ theme, rawIdeas, onBac
             <div>
                 <h2 className="text-xl font-semibold mb-4 border-b pb-2 border-gray-200 dark:border-gray-700">Contained Ideas</h2>
                 <div className="space-y-4">
+                    {theme.ideaAtoms.length === 0 && (
+                        <p className="text-gray-500 dark:text-gray-400 italic text-center py-4">No ideas have been added to this theme yet.</p>
+                    )}
                     {theme.ideaAtoms.map(atom => (
                         <div key={atom.id} className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
                             <p className="mb-2">{atom.content}</p>
@@ -131,6 +149,18 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ theme, rawIdeas, onBac
                         </div>
                     ))}
                 </div>
+                <form onSubmit={handleAddAtomSubmit} className="mt-6 flex items-center gap-2 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                    <input
+                        type="text"
+                        value={newAtomContent}
+                        onChange={(e) => setNewAtomContent(e.target.value)}
+                        placeholder="Add a new idea to this theme..."
+                        className="flex-grow w-full px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-full focus:outline-none focus:ring-2 focus:ring-brand-primary text-gray-900 dark:text-gray-100"
+                    />
+                    <button type="submit" aria-label="Add idea" disabled={!newAtomContent.trim()} className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full bg-brand-primary hover:bg-brand-secondary text-white transition-colors duration-200 disabled:bg-gray-400 dark:disabled:bg-gray-600">
+                        <span className="text-2xl font-light">+</span>
+                    </button>
+                </form>
             </div>
 
             <ChatInterface theme={theme} />

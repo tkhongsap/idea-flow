@@ -1,8 +1,9 @@
-
 export interface RawIdea {
   id: string;
   content: string;
   timestamp: string;
+  sourceType: 'text' | 'voice';
+  tags?: string[];
 }
 
 export interface IdeaAtom {
@@ -19,6 +20,7 @@ export interface Theme {
   ideaAtoms: IdeaAtom[];
   actionItems: string[];
   questions: string[];
+  isUserCreated?: boolean;
 }
 
 export interface ChatMessage {

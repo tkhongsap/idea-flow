@@ -1,6 +1,4 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
-// Fix: Import IdeaAtom type to resolve reference error.
 import { RawIdea, Theme, ChatMessage, IdeaAtom } from '../types';
 
 if (!process.env.API_KEY) {
@@ -76,7 +74,7 @@ export const organizeIdeas = async (rawIdeas: RawIdea[]): Promise<Theme[]> => {
         6. Return the result as a JSON object that adheres to the provided schema. Ensure every raw idea dump is processed and its atoms are assigned to a theme.
 
         Here are the raw idea dumps:
-        ${JSON.stringify(rawIdeas, null, 2)}
+        ${JSON.stringify(rawIdeas.map(({tags, ...rest}) => rest), null, 2)}
 
         Please provide the output in the specified JSON format.
     `;
@@ -110,7 +108,6 @@ export const organizeIdeas = async (rawIdeas: RawIdea[]): Promise<Theme[]> => {
     }
 };
 
-// Fix: Refactor chatWithTheme to correctly structure the API call by adding context to systemInstruction and passing a valid `contents` array.
 export const chatWithTheme = async (theme: Theme, history: ChatMessage[], newMessage: string): Promise<string> => {
     
     const context = `
@@ -136,7 +133,6 @@ export const chatWithTheme = async (theme: Theme, history: ChatMessage[], newMes
         parts: [{ text: msg.content }]
     }));
     chatHistory.push({ role: 'user', parts: [{ text: newMessage }] });
-
 
     try {
       const response = await ai.models.generateContent({
