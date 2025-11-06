@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { RawIdea, Theme, IdeaAtom } from './types';
-import { organizeIdeas } from './services/geminiService';
+import { organizeIdeas, semanticSearch } from './services/geminiService';
 import { CaptureInput } from './components/CaptureInput';
 import { ThemeList } from './components/ThemeList';
 import { ThemeDetail } from './components/ThemeDetail';
@@ -8,8 +8,11 @@ import { BrainIcon } from './components/icons/BrainIcon';
 import { CreateThemeModal } from './components/CreateThemeModal';
 import { IdeasList } from './components/IdeasList';
 import { SearchIcon } from './components/icons/SearchIcon';
+import { XIcon } from './components/icons/XIcon';
+
 
 type View = 'ideas' | 'themes';
+type SearchResults = { ideaIds: string[]; themeIds: string[] } | null;
 
 const App: React.FC = () => {
     const [rawIdeas, setRawIdeas] = useState<RawIdea[]>(() => {
@@ -35,6 +38,13 @@ const App: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [isCreateThemeModalOpen, setIsCreateThemeModalOpen] = useState(false);
     const [view, setView] = useState<View>('ideas');
+    
+    // Search state
+    const [searchQuery, setSearchQuery] = useState('');
+    const [isSearching, setIsSearching] = useState(false);
+    const [searchResults, setSearchResults] = useState<SearchResults>(null);
+    const searchInputRef = useRef<HTMLInputElement>(null);
+
 
     // Auto-save to localStorage whenever ideas or themes change
     useEffect(() => {
@@ -90,6 +100,18 @@ const App: React.FC = () => {
 
         return () => clearTimeout(handler);
     }, [rawIdeas, processAndOrganizeIdeas]);
+    
+    // Cmd+K for search
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
+                event.preventDefault();
+                searchInputRef.current?.focus();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []);
 
     const handleNewIdea = (content: string, sourceType: 'text' | 'voice') => {
         const newIdea: RawIdea = {
@@ -164,6 +186,29 @@ const App: React.FC = () => {
         }
     };
 
+    const handleSearch = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!searchQuery.trim()) {
+            setSearchResults(null);
+            return;
+        }
+        setIsSearching(true);
+        setError(null);
+        try {
+            const results = await semanticSearch(searchQuery, rawIdeas, themes);
+            setSearchResults(results);
+        } catch (e: any) {
+            setError(e.message || "Search failed.");
+        } finally {
+            setIsSearching(false);
+        }
+    };
+    
+    const clearSearch = () => {
+        setSearchQuery('');
+        setSearchResults(null);
+    };
+
     const renderView = () => {
         if (selectedTheme) {
             return <ThemeDetail 
@@ -173,6 +218,25 @@ const App: React.FC = () => {
                         onAddIdeaAtom={handleAddIdeaAtom} 
                     />;
         }
+
+        const currentView = searchResults ? (searchResults.ideaIds.length > 0 ? 'ideas' : (searchResults.themeIds.length > 0 ? 'themes' : view)) : view;
+
+        if (searchResults) {
+            return (
+                <div className="p-4 md:p-6">
+                    <h2 className="text-2xl font-bold mb-4">Search Results for "{searchQuery}"</h2>
+                    {searchResults.ideaIds.length > 0 && <IdeasList ideas={rawIdeas} onDeleteIdea={handleDeleteIdea} onChatWithIdea={handleChatWithIdea} filterIds={searchResults.ideaIds} />}
+                    {searchResults.themeIds.length > 0 && <ThemeList themes={themes} onSelectTheme={handleSelectTheme} onOpenCreateThemeModal={() => setIsCreateThemeModalOpen(true)} filterIds={searchResults.themeIds} />}
+                    {(searchResults.ideaIds.length === 0 && searchResults.themeIds.length === 0) && (
+                        <div className="text-center py-16 text-gray-500 dark:text-gray-400">
+                          <h3 className="text-lg font-semibold">No results found</h3>
+                          <p>Try a different search query.</p>
+                        </div>
+                    )}
+                </div>
+            )
+        }
+
 
         switch (view) {
             case 'ideas':
@@ -211,31 +275,49 @@ const App: React.FC = () => {
                              <p className="text-sm text-gray-500 dark:text-gray-400">Capture your thoughts, organize your ideas</p>
                         </div>
                     </div>
-                     <div className="relative w-full max-w-xs">
+                    <form onSubmit={handleSearch} className="relative w-full max-w-xs">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <SearchIcon className="w-5 h-5 text-gray-400" />
+                           {isSearching ? (
+                                <svg className="animate-spin h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            ) : (
+                                <SearchIcon className="w-5 h-5 text-gray-400" />
+                            )}
                         </div>
                         <input
+                            ref={searchInputRef}
                             type="text"
-                            placeholder="Search..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="Semantic Search..."
                             className="w-full bg-gray-100 dark:bg-gray-700 border border-transparent rounded-md pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent"
                         />
                         <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                            <kbd className="inline-flex items-center border border-gray-300 dark:border-gray-500 rounded px-2 text-sm font-sans font-medium text-gray-400 dark:text-gray-400">⌘K</kbd>
+                            {searchQuery ? (
+                                <button type="button" onClick={clearSearch} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                                    <XIcon className="w-5 h-5" />
+                                </button>
+                            ) : (
+                                <kbd className="inline-flex items-center border border-gray-300 dark:border-gray-500 rounded px-2 text-sm font-sans font-medium text-gray-400 dark:text-gray-400">⌘K</kbd>
+                            )}
                         </div>
-                    </div>
+                    </form>
                 </div>
             </header>
             
             <main className="max-w-4xl w-full mx-auto">
                 <CaptureInput onNewIdea={handleNewIdea} isProcessing={isProcessing} />
 
-                <div className="px-4 md:px-6">
-                    <div className="inline-flex items-center bg-gray-200 dark:bg-gray-800 p-1 rounded-lg">
-                        <TabButton targetView="ideas" label="Ideas" />
-                        <TabButton targetView="themes" label="Themes" />
+                {!searchResults && (
+                    <div className="px-4 md:px-6">
+                        <div className="inline-flex items-center bg-gray-200 dark:bg-gray-800 p-1 rounded-lg">
+                            <TabButton targetView="ideas" label="Ideas" />
+                            <TabButton targetView="themes" label="Themes" />
+                        </div>
                     </div>
-                </div>
+                )}
                 
                 {error && (
                     <div className="m-4 p-4 bg-red-100 border-l-4 border-red-500 text-red-700 rounded-md">

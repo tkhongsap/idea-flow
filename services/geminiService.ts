@@ -23,7 +23,7 @@ const organizeSchema = {
       tags: {
         type: Type.ARRAY,
         items: { type: Type.STRING },
-        description: 'A list of 3-5 relevant keyword tags for the theme.'
+        description: 'A list of 3-5 relevant keyword tags for the theme. Tags should represent concepts, not just words from the text.'
       },
       ideaAtoms: {
         type: Type.ARRAY,
@@ -62,21 +62,25 @@ export const organizeIdeas = async (rawIdeas: RawIdea[]): Promise<Theme[]> => {
     if (rawIdeas.length === 0) return [];
 
     const prompt = `
-        You are an expert personal assistant specializing in synthesizing and organizing scattered thoughts.
-        I will provide you with a list of raw, timestamped 'idea dumps'. Your task is to process these dumps and organize them into structured themes.
+        You are an expert personal assistant specializing in synthesizing and organizing scattered thoughts into meaningful, structured themes.
+        Your task is to process a list of raw, timestamped 'idea dumps', understand their deeper meaning and connections, and organize them.
 
-        Follow these steps:
-        1. Read all the raw idea dumps provided below. Each dump has a unique 'id'.
-        2. Identify distinct, self-contained thoughts within each dump. Call these 'idea atoms'.
-        3. Identify overarching themes or topics that connect multiple idea atoms.
-        4. Group the related idea atoms under their respective themes. An idea atom can belong to only one theme.
-        5. For each theme, create a concise, descriptive title, a short summary, 3-5 relevant keyword tags, and extract any potential 'action items' and 'questions'.
-        6. Return the result as a JSON object that adheres to the provided schema. Ensure every raw idea dump is processed and its atoms are assigned to a theme.
+        Follow these critical steps:
+        1.  **Deep Analysis:** Read all the raw idea dumps. Look beyond keywords to understand the underlying concepts, intent, and context. An idea about "a tool for waking up early" and "an app for better sleep" are both related to the theme of "Personal Health Routines".
+        2.  **Atomization:** For each dump, break it down into its core, distinct, self-contained thoughts. These are 'idea atoms'. For example, "I want to build a productivity app that helps people track habits and uses gamification" breaks down into at least three atoms: "mobile app development idea," "habit tracking feature," and "gamification for user engagement."
+        3.  **Thematic Clustering:** Identify overarching themes that connect multiple idea atoms based on their semantic similarity, not just shared words. A theme should represent a larger project, area of interest, or problem space.
+        4.  **Enrichment:** For each theme, generate the following:
+            *   A concise, insightful title (3-6 words).
+            *   A short summary paragraph that captures the essence of the theme.
+            *   3-5 highly relevant, conceptual keyword tags.
+            *   A list of potential 'action items'.
+            *   A list of 'unasked questions' that the ideas provoke.
+        5.  **Assignment:** Group the idea atoms under their most relevant theme. An idea atom must belong to only one theme. Ensure every single raw idea dump is processed and its atoms are assigned to a theme.
+        
+        Return the result as a JSON object that adheres to the provided schema.
 
         Here are the raw idea dumps:
         ${JSON.stringify(rawIdeas.map(({tags, ...rest}) => rest), null, 2)}
-
-        Please provide the output in the specified JSON format.
     `;
 
     try {
@@ -120,10 +124,14 @@ export const chatWithTheme = async (theme: Theme, history: ChatMessage[], newMes
       Questions: ${theme.questions.join(', ') || 'None'}
     `;
 
-    const systemInstruction = `You are a helpful assistant helping a user refine and explore their ideas.
-    Your knowledge is strictly limited to the provided context about the theme.
-    Use the context to answer questions, brainstorm, and elaborate on the user's thoughts.
-    Keep your responses concise and directly related to the theme.
+    const systemInstruction = `You are a creative partner and brainstorming assistant. Your goal is to help the user explore the full potential of their ideas within the given theme.
+    Use the provided context as a starting point, but do not be limited by it.
+    Your role is to be provocative, insightful, and inspiring.
+    - Ask clarifying and expansive questions (e.g., "What's the core problem this idea solves?", "Who would benefit most from this?").
+    - Suggest alternative angles and novel connections to other concepts.
+    - Identify potential challenges or blind spots in the user's thinking.
+    - Help the user elaborate and build upon their initial thoughts.
+    Keep your responses concise, engaging, and focused on pushing the user's thinking forward.
 
     CONTEXT:
     ${context}`;
@@ -147,5 +155,60 @@ export const chatWithTheme = async (theme: Theme, history: ChatMessage[], newMes
     } catch (error) {
         console.error("Error chatting with theme:", error);
         throw new Error("Failed to get a response from the model.");
+    }
+};
+
+const searchSchema = {
+    type: Type.OBJECT,
+    properties: {
+        ideaIds: {
+            type: Type.ARRAY,
+            items: { type: Type.STRING },
+            description: "An array of IDs of the raw ideas that are most semantically relevant to the user's query."
+        },
+        themeIds: {
+            type: Type.ARRAY,
+            items: { type: Type.STRING },
+            description: "An array of IDs of the themes that are most semantically relevant to the user's query."
+        }
+    },
+    required: ['ideaIds', 'themeIds']
+};
+
+export const semanticSearch = async (query: string, ideas: RawIdea[], themes: Theme[]): Promise<{ideaIds: string[], themeIds: string[]}> => {
+    if (!query.trim()) return { ideaIds: [], themeIds: [] };
+
+    const simplifiedIdeas = ideas.map(idea => ({ id: idea.id, content: idea.content }));
+    const simplifiedThemes = themes.map(theme => ({ id: theme.id, title: theme.title, summary: theme.summary }));
+
+    const prompt = `
+        You are a semantic search engine. Your task is to find the most relevant ideas and themes from the provided data that match the user's search query.
+        Relevance should be based on the conceptual meaning and intent, not just keyword matching.
+
+        For example, if the user searches for "improving focus", an idea about a "distraction-free writing app" is highly relevant, even if it doesn't contain the word "focus".
+
+        User Search Query: "${query}"
+
+        Available Data:
+        - Raw Ideas: ${JSON.stringify(simplifiedIdeas, null, 2)}
+        - Themes: ${JSON.stringify(simplifiedThemes, null, 2)}
+
+        Analyze the query and the data, and return a JSON object containing the IDs of the top 5 most relevant ideas and top 5 most relevant themes. If no relevant items are found, return empty arrays.
+    `;
+
+    try {
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: searchSchema,
+            },
+        });
+        const jsonString = response.text;
+        return JSON.parse(jsonString);
+    } catch (error) {
+        console.error("Error performing semantic search:", error);
+        throw new Error("Failed to perform search.");
     }
 };
