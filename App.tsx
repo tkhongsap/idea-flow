@@ -9,6 +9,7 @@ import { IdeasList } from './components/IdeasList';
 import { SearchIcon } from './components/icons/SearchIcon';
 import { XIcon } from './components/icons/XIcon';
 import { LightbulbIcon } from './components/icons/LightbulbIcon';
+import { BrainIcon } from './components/icons/BrainIcon';
 
 
 type View = 'ideas' | 'themes';
@@ -273,8 +274,6 @@ const App: React.FC = () => {
                     />;
         }
 
-        const currentView = searchResults ? (searchResults.ideaIds.length > 0 ? 'ideas' : (searchResults.themeIds.length > 0 ? 'themes' : view)) : view;
-
         if (searchResults) {
             return (
                 <div>
@@ -344,17 +343,19 @@ const App: React.FC = () => {
 
     const TabButton: React.FC<{
         targetView: View,
-        label: string
-    }> = ({ targetView, label }) => (
+        label: string,
+        icon: React.ReactNode,
+    }> = ({ targetView, label, icon }) => (
         <button
             onClick={() => setView(targetView)}
-            className={`px-4 py-2 text-sm font-medium rounded-md font-sans ${
+            className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md font-sans transition-colors ${
                 view === targetView 
                 ? 'bg-white dark:bg-stone-700 text-stone-900 dark:text-stone-100 shadow-sm' 
-                : 'text-stone-500 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-800'
+                : 'text-stone-500 dark:text-stone-400 hover:bg-stone-200/60 dark:hover:bg-stone-800/60'
             }`}
         >
-            {label}
+            {icon}
+            <span>{label}</span>
         </button>
     );
 
@@ -363,7 +364,7 @@ const App: React.FC = () => {
             <header className="px-4 pt-8 sm:pt-12">
                 <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
-                        <LightbulbIcon className="w-8 h-8 text-sage" />
+                        <BrainIcon className="w-8 h-8 text-sage" />
                         <div>
                              <h1 className="text-3xl font-bold text-stone-800 dark:text-stone-100">IdeaFlow</h1>
                              <p className="text-lg text-stone-500 dark:text-stone-400">Capture your thoughts, organize your ideas</p>
@@ -407,8 +408,8 @@ const App: React.FC = () => {
                 {!searchResults && (
                     <div className="mt-8">
                         <div className="inline-flex items-center bg-stone-200 dark:bg-stone-800 p-1 rounded-lg">
-                            <TabButton targetView="ideas" label="Ideas" />
-                            <TabButton targetView="themes" label="Themes" />
+                            <TabButton targetView="ideas" label="Ideas" icon={<LightbulbIcon className="w-4 h-4"/>} />
+                            <TabButton targetView="themes" label="Themes" icon={<BrainIcon className="w-4 h-4" />} />
                         </div>
                     </div>
                 )}
