@@ -1,0 +1,7 @@
+{
+  "name": "IdeaFlow",
+  "description": "A lightweight personal application that allows users to capture spontaneous ideas (text or voice) and automatically organizes them into structured themes, helping users revisit, refine, and act on their thoughts later.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
