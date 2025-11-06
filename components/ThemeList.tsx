@@ -77,9 +77,9 @@ export const ThemeList: React.FC<ThemeListProps> = ({
   }
 
   return (
-    <div className="p-4 md:p-0">
+    <div>
       {filteredThemes.length === 0 && !isSearching && (
-        <div className="text-center py-20 px-6 bg-white dark:bg-stone-900/50 border-2 border-dashed border-stone-300 dark:border-stone-700 rounded-xl">
+        <div className="text-center py-20 px-6 bg-white dark:bg-stone-900/50 border-2 border-dashed border-stone-300 dark:border-stone-700 rounded-lg">
           <h3 className="text-lg font-semibold text-stone-700 dark:text-stone-300">No themes yet</h3>
           <p className="text-stone-500 dark:text-stone-400 mt-1">Capture some ideas first, and they will be organized into themes here automatically.</p>
            <button onClick={onOpenCreateThemeModal} className="mt-4 px-4 py-2 text-sm font-semibold text-white bg-sage rounded-lg hover:brightness-105 transition-all">
@@ -98,7 +98,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({
           {!isSearching && themes.length > 0 && (
             <div
               onClick={onOpenCreateThemeModal}
-              className="bg-white dark:bg-stone-900/50 rounded-xl border-2 border-dashed border-stone-300 dark:border-stone-700 p-6 cursor-pointer hover:bg-stone-50 dark:hover:bg-stone-800/50 hover:border-sage dark:hover:border-sage transition-all duration-300 flex items-center justify-center flex-col min-h-[220px]"
+              className="bg-white dark:bg-stone-900/50 rounded-lg border-2 border-dashed border-stone-300 dark:border-stone-700 p-6 cursor-pointer hover:bg-stone-50 dark:hover:bg-stone-800/50 hover:border-sage dark:hover:border-sage transition-all duration-300 flex items-center justify-center flex-col min-h-[220px]"
               role="button"
               aria-label="Create a new theme"
             >
@@ -118,7 +118,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({
               onDragLeave={handleDragLeave}
               onDragEnd={handleDragEnd}
               onClick={() => onSelectTheme(theme)}
-              className={`bg-white dark:bg-stone-900 rounded-xl p-6 cursor-grab active:cursor-grabbing hover:border-stone-300 dark:hover:border-stone-600 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between min-h-[220px] border-2
+              className={`bg-white dark:bg-stone-900 rounded-lg p-6 cursor-grab active:cursor-grabbing hover:border-stone-300 dark:hover:border-stone-600 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between min-h-[220px] border-2 shadow-sm dark:shadow-none
                 ${draggedItem?.id === theme.id ? 'opacity-40' : ''}
                 ${dragOverItem?.id === theme.id && draggedItem?.id !== theme.id
                   ? (draggedItem?.type === 'idea'

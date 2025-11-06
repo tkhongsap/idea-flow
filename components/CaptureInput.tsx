@@ -106,49 +106,47 @@ export const CaptureInput: React.FC<CaptureInputProps> = ({ onNewIdea, isProcess
   };
   
   return (
-    <div className="p-4 md:p-0">
-        <div className="bg-white dark:bg-stone-900 rounded-xl border border-stone-200 dark:border-stone-800 p-4">
-             <form onSubmit={handleSubmit}>
-                <textarea
-                    ref={textAreaRef}
-                    value={text}
-                    onChange={(e) => setText(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    placeholder={isRecording ? "Listening..." : "What's on your mind? Type or record your idea..."}
-                    className="w-full px-2 py-1 bg-transparent focus:outline-none text-stone-900 dark:text-stone-100 placeholder-stone-400 dark:placeholder-stone-500 resize-none text-lg"
-                    rows={4}
-                    disabled={isProcessing}
-                />
-                <div className="flex justify-between items-center mt-2">
-                    <div className="flex items-center gap-4">
-                         <button
-                            type="button"
-                            onClick={handleToggleRecording}
-                            disabled={isProcessing}
-                            className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors duration-200 ${
-                            isRecording 
-                                ? 'bg-red-500 hover:bg-red-600 text-white animate-pulse-fast' 
-                                : 'bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 hover:bg-stone-100 dark:hover:bg-stone-700 text-stone-600 dark:text-stone-300'
-                            }`}
-                            aria-label={isRecording ? 'Stop recording' : 'Record Voice'}
-                        >
-                            {isRecording ? <StopIcon className="w-4 h-4" /> : <MicIcon className="w-4 h-4" />}
-                            <span>{isRecording ? 'Stop' : 'Record Voice'}</span>
-                        </button>
-                        <span className="text-xs text-stone-500 dark:text-stone-400">Press <kbd className="font-sans border rounded px-1.5 py-0.5 border-stone-200 dark:border-stone-600 bg-stone-50 dark:bg-stone-800 text-stone-600 dark:text-stone-400">Cmd</kbd> + <kbd className="font-sans border rounded px-1.5 py-0.5 border-stone-200 dark:border-stone-600 bg-stone-50 dark:bg-stone-800 text-stone-600 dark:text-stone-400">Enter</kbd> to save</span>
-                    </div>
-                   
-                    <button
-                        type="submit"
-                        disabled={!text.trim() || isProcessing || isRecording}
-                        className="px-6 py-2 rounded-lg bg-sage text-white font-semibold hover:brightness-105 transition-all duration-200 disabled:bg-stone-300 dark:disabled:bg-stone-600 disabled:cursor-not-allowed"
-                        aria-label="Capture Idea"
+    <div className="bg-white dark:bg-stone-900 rounded-lg border border-stone-200 dark:border-stone-800 p-4 shadow-sm dark:shadow-none">
+         <form onSubmit={handleSubmit}>
+            <textarea
+                ref={textAreaRef}
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={isRecording ? "Listening..." : "What's on your mind? Type or record your idea..."}
+                className="w-full px-2 py-1 bg-transparent focus:outline-none text-stone-900 dark:text-stone-100 placeholder-stone-400 dark:placeholder-stone-500 resize-none text-lg"
+                rows={4}
+                disabled={isProcessing}
+            />
+            <div className="flex justify-between items-center mt-2">
+                <div className="flex items-center gap-4">
+                     <button
+                        type="button"
+                        onClick={handleToggleRecording}
+                        disabled={isProcessing}
+                        className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors duration-200 ${
+                        isRecording 
+                            ? 'bg-red-500 hover:bg-red-600 text-white animate-pulse-fast' 
+                            : 'bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 hover:bg-stone-100 dark:hover:bg-stone-700 text-stone-600 dark:text-stone-300'
+                        }`}
+                        aria-label={isRecording ? 'Stop recording' : 'Record Voice'}
                     >
-                        Capture Idea
+                        {isRecording ? <StopIcon className="w-4 h-4" /> : <MicIcon className="w-4 h-4" />}
+                        <span>{isRecording ? 'Stop' : 'Record Voice'}</span>
                     </button>
+                    <span className="text-xs text-stone-500 dark:text-stone-400">Press <kbd className="font-sans border rounded px-1.5 py-0.5 border-stone-200 dark:border-stone-600 bg-stone-50 dark:bg-stone-800 text-stone-600 dark:text-stone-400">Cmd</kbd> + <kbd className="font-sans border rounded px-1.5 py-0.5 border-stone-200 dark:border-stone-600 bg-stone-50 dark:bg-stone-800 text-stone-600 dark:text-stone-400">Enter</kbd> to save</span>
                 </div>
-            </form>
-        </div>
+               
+                <button
+                    type="submit"
+                    disabled={!text.trim() || isProcessing || isRecording}
+                    className="px-6 py-2 rounded-lg bg-sage text-white font-semibold hover:brightness-105 transition-all duration-200 disabled:bg-stone-300 dark:disabled:bg-stone-600 disabled:cursor-not-allowed"
+                    aria-label="Capture Idea"
+                >
+                    Capture Idea
+                </button>
+            </div>
+        </form>
     </div>
   );
 };

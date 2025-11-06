@@ -277,7 +277,7 @@ const App: React.FC = () => {
 
         if (searchResults) {
             return (
-                <div className="p-4 md:p-6">
+                <div>
                     <h2 className="text-2xl font-bold mb-4">Search Results for "{searchQuery}"</h2>
                     {searchResults.ideaIds.length > 0 && 
                         <IdeasList 
@@ -360,13 +360,13 @@ const App: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-stone-50 dark:bg-stone-900 font-sans text-stone-900 dark:text-stone-100">
-            <header className="p-4 border-b border-stone-200 dark:border-stone-700 bg-white/80 dark:bg-stone-800/50 sticky top-0 z-10 backdrop-blur-sm">
-                <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+            <header className="px-4 pt-8 sm:pt-12">
+                <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
-                        <LightbulbIcon className="w-8 h-8 text-brand-primary" />
+                        <LightbulbIcon className="w-8 h-8 text-sage" />
                         <div>
-                             <h1 className="text-xl font-bold text-stone-800 dark:text-stone-100">IdeaFlow</h1>
-                             <p className="text-sm text-stone-500 dark:text-stone-400 font-sans">Capture your thoughts, organize your ideas</p>
+                             <h1 className="text-3xl font-bold text-stone-800 dark:text-stone-100">IdeaFlow</h1>
+                             <p className="text-lg text-stone-500 dark:text-stone-400">Capture your thoughts, organize your ideas</p>
                         </div>
                     </div>
                     <form onSubmit={handleSearch} className="relative w-full max-w-xs">
@@ -386,7 +386,7 @@ const App: React.FC = () => {
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             placeholder="Semantic Search..."
-                            className="w-full bg-stone-100 dark:bg-stone-700 border border-transparent rounded-md pl-10 pr-4 py-2 text-sm font-sans focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent"
+                            className="w-full bg-stone-100 dark:bg-stone-700 border border-transparent rounded-md pl-10 pr-4 py-2 text-sm font-sans focus:outline-none focus:ring-2 focus:ring-sage focus:border-transparent"
                         />
                         <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
                             {searchQuery ? (
@@ -401,11 +401,11 @@ const App: React.FC = () => {
                 </div>
             </header>
             
-            <main className="max-w-4xl w-full mx-auto">
+            <main className="max-w-4xl w-full mx-auto px-4 py-8">
                 <CaptureInput onNewIdea={handleNewIdea} isProcessing={isProcessing} />
 
                 {!searchResults && (
-                    <div className="px-4 md:px-6">
+                    <div className="mt-8">
                         <div className="inline-flex items-center bg-stone-200 dark:bg-stone-800 p-1 rounded-lg">
                             <TabButton targetView="ideas" label="Ideas" />
                             <TabButton targetView="themes" label="Themes" />
@@ -420,7 +420,9 @@ const App: React.FC = () => {
                     </div>
                 )}
                 
-                {renderView()}
+                <div className="mt-6">
+                    {renderView()}
+                </div>
             </main>
             
             <CreateThemeModal 

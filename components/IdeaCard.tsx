@@ -61,7 +61,7 @@ export const IdeaCard: React.FC<IdeaCardProps> = ({
       onDragOver={handleDragOver}
       onDrop={(e) => handleDrop(e, idea)}
       onDragEnd={handleDragEnd}
-      className={`bg-white dark:bg-stone-900 p-4 rounded-xl border border-stone-200 dark:border-stone-800 flex flex-col gap-3 cursor-grab active:cursor-grabbing transition-opacity
+      className={`bg-white dark:bg-stone-900 p-4 rounded-lg border border-stone-200 dark:border-stone-800 flex flex-col gap-3 cursor-grab active:cursor-grabbing transition-opacity shadow-sm dark:shadow-none
         ${draggedItem?.id === idea.id ? 'opacity-40' : 'opacity-100'}
       `}
     >

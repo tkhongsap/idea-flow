@@ -44,7 +44,7 @@ const ChatInterface: React.FC<{ theme: Theme }> = ({ theme }) => {
     };
 
     return (
-        <div className="bg-white dark:bg-stone-900 rounded-xl border border-stone-200 dark:border-stone-800 mt-8 flex flex-col h-[60vh]">
+        <div className="bg-white dark:bg-stone-900 rounded-lg border border-stone-200 dark:border-stone-800 mt-8 flex flex-col h-[60vh] shadow-sm dark:shadow-none">
             <h3 className="text-lg font-semibold p-4 border-b border-stone-200 dark:border-stone-800 text-stone-800 dark:text-stone-200">Chat with this theme</h3>
             <div className="flex-grow p-4 overflow-y-auto">
                 {messages.length === 0 && (
@@ -105,7 +105,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ theme, rawIdeas, onBac
     };
     
     return (
-        <div className="p-4 md:p-0 text-stone-900 dark:text-stone-100">
+        <div className="text-stone-900 dark:text-stone-100">
              <button onClick={onBack} className="mb-6 text-sage hover:underline">&larr; Back to all themes</button>
 
             <h1 className="text-4xl font-bold mb-2 text-stone-900 dark:text-stone-100">{theme.title}</h1>
@@ -118,7 +118,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ theme, rawIdeas, onBac
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 {theme.actionItems.length > 0 && (
-                    <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 p-4 rounded-xl">
+                    <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 p-4 rounded-lg shadow-sm dark:shadow-none">
                         <h3 className="font-semibold text-stone-800 dark:text-stone-300 mb-2">Action Items</h3>
                         <ul className="list-disc list-inside space-y-1 text-stone-700 dark:text-stone-200">
                             {theme.actionItems.map((item, i) => <li key={i}>{item}</li>)}
@@ -126,7 +126,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ theme, rawIdeas, onBac
                     </div>
                 )}
                  {theme.questions.length > 0 && (
-                    <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 p-4 rounded-xl">
+                    <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 p-4 rounded-lg shadow-sm dark:shadow-none">
                         <h3 className="font-semibold text-stone-800 dark:text-stone-300 mb-2">Questions</h3>
                         <ul className="list-disc list-inside space-y-1 text-stone-700 dark:text-stone-200">
                             {theme.questions.map((item, i) => <li key={i}>{item}</li>)}
