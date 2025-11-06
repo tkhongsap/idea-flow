@@ -1,0 +1,20 @@
+{
+  "name": "ideaflow-backend-api",
+  "version": "1.0.0",
+  "description": "Secure backend API proxy for IdeaFlow Gemini integration",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": ["ideaflow", "gemini", "api", "proxy"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@google/genai": "^0.21.0",
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "express-rate-limit": "^7.1.5"
+  }
+}

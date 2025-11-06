@@ -1,0 +1,7 @@
+node_modules/
+.env
+.replit
+replit.nix
+.upm/
+*.log
+.DS_Store
