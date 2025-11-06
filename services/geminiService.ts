@@ -62,24 +62,24 @@ export const organizeIdeas = async (rawIdeas: RawIdea[]): Promise<Theme[]> => {
     if (rawIdeas.length === 0) return [];
 
     const prompt = `
-        You are an expert personal assistant specializing in synthesizing and organizing scattered thoughts into meaningful, structured themes.
-        Your task is to process a list of raw, timestamped 'idea dumps', understand their deeper meaning and connections, and organize them.
+        You are an expert personal assistant and strategist, specializing in synthesizing scattered thoughts into actionable, structured themes.
+        Your task is to process a list of raw, timestamped 'idea dumps', understand their deeper meaning and both explicit and implicit connections, and organize them into insightful themes.
 
         Follow these critical steps:
-        1.  **Deep Analysis:** Read all the raw idea dumps. Look beyond keywords to understand the underlying concepts, intent, and context. An idea about "a tool for waking up early" and "an app for better sleep" are both related to the theme of "Personal Health Routines".
-        2.  **Atomization:** For each dump, break it down into its core, distinct, self-contained thoughts. These are 'idea atoms'. For example, "I want to build a productivity app that helps people track habits and uses gamification" breaks down into at least three atoms: "mobile app development idea," "habit tracking feature," and "gamification for user engagement."
-        3.  **Thematic Clustering:** Identify overarching themes that connect multiple idea atoms based on their semantic similarity, not just shared words. A theme should represent a larger project, area of interest, or problem space.
-        4.  **Enrichment:** For each theme, generate the following:
-            *   A concise, insightful title (3-6 words).
-            *   A short summary paragraph that captures the essence of the theme.
-            *   3-5 highly relevant, conceptual keyword tags.
-            *   A list of potential 'action items'.
-            *   A list of 'unasked questions' that the ideas provoke.
-        5.  **Assignment:** Group the idea atoms under their most relevant theme. An idea atom must belong to only one theme. Ensure every single raw idea dump is processed and its atoms are assigned to a theme.
+        1.  **Deep Analysis & Connection Finding:** Read all the raw idea dumps. Look beyond keywords to understand the underlying concepts, user intent, and context. Actively search for non-obvious and implicit connections. For example, an idea about "a tool for waking up early" and "an app for better sleep" are both related to "Personal Health Routines". Similarly, an idea about "learning to cook" and another about "budgeting for groceries" could be linked under a theme of "Improving Home Life & Finances".
+        2.  **Atomization:** For each raw idea dump, break it down into its core, distinct, self-contained thoughts. These are 'idea atoms'. For example, "I want to build a productivity app that helps people track habits and uses gamification" breaks down into three atoms: "mobile app development idea," "habit tracking feature," and "gamification for user engagement."
+        3.  **Thematic Clustering:** Identify overarching themes that connect multiple idea atoms based on their semantic similarity and shared goals, not just shared words. A theme should represent a larger project, area of interest, or problem space that provides a framework for action.
+        4.  **Insightful Enrichment:** For each theme, generate the following with high specificity and quality:
+            *   **Title:** A concise, insightful title (3-6 words) that captures the essence of the theme.
+            *   **Summary:** A short summary paragraph that synthesizes the core concept and its potential.
+            *   **Tags:** 3-5 highly relevant, conceptual keyword tags. Tags should be hierarchical or categorical where possible (e.g., 'SaaS', 'Productivity', 'Time Management') rather than just repeating words from the text.
+            *   **Action Items:** A list of concrete, first-step action items. Frame them as clear commands (e.g., 'Research competitor apps in the habit-tracking space' instead of 'Competitor research').
+            *   **Questions:** A list of open-ended, provocative questions designed to stimulate deeper thinking and uncover blind spots (e.g., 'What is the unique value proposition compared to existing solutions?' instead of 'Are there other apps?').
+        5.  **Assignment:** Group the idea atoms under their most relevant theme. An idea atom must belong to only one theme. Ensure every single raw idea dump is processed and all its atoms are assigned to a theme.
         
-        Return the result as a JSON object that adheres to the provided schema.
+        Return the result as a JSON object that adheres to the provided schema. Do not include any explanatory text before or after the JSON.
 
-        Here are the raw idea dumps:
+        Here are the raw idea dumps to be processed:
         ${JSON.stringify(rawIdeas.map(({tags, ...rest}) => rest), null, 2)}
     `;
 

@@ -69,17 +69,12 @@ const ChatInterface: React.FC<{ theme: Theme }> = ({ theme }) => {
             
             <div className={`transition-all duration-300 ${messages.length > 0 ? 'border-t border-stone-200 dark:border-stone-800 pt-6' : ''}`}>
                 <div className="max-h-[60vh] overflow-y-auto pr-2 space-y-6">
-                    {messages.length === 0 && !isLoading && (
-                        <div className="text-center text-stone-500 dark:text-stone-400 py-8">
-                            <LightbulbIcon className="w-10 h-10 mx-auto mb-2 text-stone-400"/>
-                            <p className="font-medium">Explore Your Theme</p>
-                            <p className="text-sm">Ask questions to refine your ideas.</p>
-                        </div>
-                    )}
+                    {/* Empty state removed for minimal initial appearance */}
+                    
                     {messages.map((msg, index) => (
                         <div key={index} className={`flex items-start gap-3 my-4 ${msg.role === 'user' ? 'justify-end' : ''}`}>
                             {msg.role === 'model' && <div className="flex-shrink-0 w-8 h-8 rounded-full bg-sage text-white flex items-center justify-center"><LightbulbIcon className="w-5 h-5"/></div>}
-                            <div className={`max-w-xl p-3 rounded-lg ${msg.role === 'user' ? 'bg-sage text-white' : 'bg-stone-100 dark:bg-stone-800 text-stone-800 dark:text-stone-200'}`}>
+                            <div className={`max-w-xl p-3 rounded-xl ${msg.role === 'user' ? 'bg-sage text-white' : 'bg-white dark:bg-stone-800 text-stone-800 dark:text-stone-200 border border-stone-200 dark:border-stone-700/50'}`}>
                             {msg.content}
                             </div>
                         </div>
@@ -87,7 +82,7 @@ const ChatInterface: React.FC<{ theme: Theme }> = ({ theme }) => {
                     {isLoading && (
                         <div className="flex items-start gap-3 my-4">
                             <div className="flex-shrink-0 w-8 h-8 rounded-full bg-sage text-white flex items-center justify-center"><LightbulbIcon className="w-5 h-5 animate-pulse"/></div>
-                            <div className="max-w-md p-3 rounded-lg bg-stone-100 dark:bg-stone-800">
+                            <div className="max-w-md p-3 rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700/50">
                             <div className="h-2 bg-stone-300 dark:bg-stone-600 rounded-full w-24 animate-pulse"></div>
                             </div>
                         </div>
@@ -97,20 +92,23 @@ const ChatInterface: React.FC<{ theme: Theme }> = ({ theme }) => {
             </div>
 
             <div className="mt-4">
-                <form onSubmit={handleSend} className="relative">
+                <form 
+                    onSubmit={handleSend} 
+                    className="flex items-end gap-2 p-2 bg-white dark:bg-stone-800/80 backdrop-blur-sm border border-stone-200 dark:border-stone-700 rounded-xl shadow-sm focus-within:ring-2 focus-within:ring-sage"
+                >
                     <textarea
                         ref={textareaRef}
                         rows={1}
                         value={input}
                         onChange={handleInput}
                         onKeyDown={handleKeyDown}
-                        placeholder="Ask a follow-up question, e.g., 'What are the risks?'"
-                        className="w-full px-4 py-3 pr-14 bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage text-stone-900 dark:text-stone-100 resize-none transition-all duration-200 leading-tight"
+                        placeholder="Ask a follow-up question..."
+                        className="flex-grow w-full px-2 py-1.5 bg-transparent focus:outline-none text-stone-900 dark:text-stone-100 resize-none"
                     />
                     <button
                         type="submit"
                         disabled={!input.trim() || isLoading}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center rounded-lg bg-sage hover:brightness-105 text-white transition-all duration-200 disabled:bg-stone-400 dark:disabled:bg-stone-600 disabled:cursor-not-allowed"
+                        className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg bg-sage hover:brightness-105 text-white transition-all duration-200 disabled:bg-stone-400 dark:disabled:bg-stone-600 disabled:cursor-not-allowed"
                         aria-label="Send message"
                     >
                         {isLoading ? (
