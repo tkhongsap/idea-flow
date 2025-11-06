@@ -1,64 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Theme, ChatMessage, RawIdea } from '../types';
-import { chatWithTheme } from '../services/geminiService';
+import { chatWithTheme, transcribeAudio } from '../services/geminiService';
 import { SendIcon } from './icons/SendIcon';
 import { MicIcon } from './icons/MicIcon';
-import { GoogleGenAI, LiveSession, Blob, Modality, LiveServerMessage } from '@google/genai';
+import { StopIcon } from './icons/StopIcon';
 import { BrainIcon } from './icons/BrainIcon';
 import { UserIcon } from './icons/UserIcon';
-
-// --- Audio Encoding & Decoding Helpers ---
-function encode(bytes: Uint8Array): string {
-    let binary = '';
-    const len = bytes.byteLength;
-    for (let i = 0; i < len; i++) {
-        binary += String.fromCharCode(bytes[i]);
-    }
-    return btoa(binary);
-}
-
-function decode(base64: string): Uint8Array {
-    const binaryString = atob(base64);
-    const len = binaryString.length;
-    const bytes = new Uint8Array(len);
-    for (let i = 0; i < len; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-    }
-    return bytes;
-}
-
-async function decodeAudioData(
-    data: Uint8Array,
-    ctx: AudioContext,
-    sampleRate: number,
-    numChannels: number,
-): Promise<AudioBuffer> {
-    const dataInt16 = new Int16Array(data.buffer);
-    const frameCount = dataInt16.length / numChannels;
-    const buffer = ctx.createBuffer(numChannels, frameCount, sampleRate);
-
-    for (let channel = 0; channel < numChannels; channel++) {
-        const channelData = buffer.getChannelData(channel);
-        for (let i = 0; i < frameCount; i++) {
-            channelData[i] = dataInt16[i * numChannels + channel] / 32768.0;
-        }
-    }
-    return buffer;
-}
-
-function createBlob(data: Float32Array): Blob {
-    const l = data.length;
-    const int16 = new Int16Array(l);
-    for (let i = 0; i < l; i++) {
-        int16[i] = data[i] * 32768;
-    }
-    return {
-        data: encode(new Uint8Array(int16.buffer)),
-        mimeType: 'audio/pcm;rate=16000',
-    };
-}
-// ---------------------------------------------------
-
+import { Waveform } from './Waveform';
 
 interface ThemeDetailProps {
   theme: Theme;
@@ -71,50 +19,24 @@ const ChatInterface: React.FC<{ theme: Theme }> = ({ theme }) => {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const [isVoiceChatActive, setIsVoiceChatActive] = useState(false);
+    
+    const [isRecording, setIsRecording] = useState(false);
+    const [isTranscribing, setIsTranscribing] = useState(false);
+    const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+    const audioChunksRef = useRef<Blob[]>([]);
+    const audioContextRef = useRef<AudioContext | null>(null);
+    const [analyserNode, setAnalyserNode] = useState<AnalyserNode | null>(null);
 
     const chatEndRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
-    
-    // Live API Refs
-    const sessionPromiseRef = useRef<Promise<LiveSession> | null>(null);
-    const mediaStreamRef = useRef<MediaStream | null>(null);
-    const inputAudioContextRef = useRef<AudioContext | null>(null);
-    const outputAudioContextRef = useRef<AudioContext | null>(null);
-    const scriptProcessorRef = useRef<ScriptProcessorNode | null>(null);
-    const outputNodeRef = useRef<GainNode | null>(null);
-    const audioQueueRef = useRef<Set<AudioBufferSourceNode>>(new Set());
-    const nextStartTimeRef = useRef<number>(0);
-    const currentTurnRef = useRef<{ user: ChatMessage | null, model: ChatMessage | null }>({ user: null, model: null });
-
-    const cleanupAudioResources = () => {
-        sessionPromiseRef.current?.then(session => session.close());
-        mediaStreamRef.current?.getTracks().forEach(track => track.stop());
-        scriptProcessorRef.current?.disconnect();
-        if (inputAudioContextRef.current?.state !== 'closed') inputAudioContextRef.current?.close();
-        if (outputAudioContextRef.current?.state !== 'closed') outputAudioContextRef.current?.close();
-        for (const source of audioQueueRef.current.values()) source.stop();
-        audioQueueRef.current.clear();
-        sessionPromiseRef.current = null;
-        mediaStreamRef.current = null;
-        inputAudioContextRef.current = null;
-        outputAudioContextRef.current = null;
-        scriptProcessorRef.current = null;
-        nextStartTimeRef.current = 0;
-    };
 
     useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
-    useEffect(() => {
-        // Cleanup on unmount
-        return () => cleanupAudioResources();
-    }, []);
-
     const handleSend = async (e?: React.FormEvent) => {
         if (e) e.preventDefault();
-        if (!input.trim() || isLoading || isVoiceChatActive) return;
+        if (!input.trim() || isLoading || isRecording || isTranscribing) return;
 
         const userMessage: ChatMessage = { role: 'user', content: input };
         setMessages(prev => [...prev, userMessage]);
@@ -136,101 +58,65 @@ const ChatInterface: React.FC<{ theme: Theme }> = ({ theme }) => {
         }
     };
 
-    const handleToggleVoiceChat = async () => {
-        if (isVoiceChatActive) {
-            setIsVoiceChatActive(false);
-            cleanupAudioResources();
+    const handleToggleRecording = async () => {
+        if (isRecording) {
+            mediaRecorderRef.current?.stop();
         } else {
-            setIsVoiceChatActive(true);
-            const systemInstruction = `You are a creative partner exploring a specific theme.
-            CONTEXT:
-            Theme Title: ${theme.title}
-            Summary: ${theme.summary}
-            Contained Ideas: ${theme.ideaAtoms.map(a => a.content).join(', ')}`;
-            
             try {
-                const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-                const sessionPromise = ai.live.connect({
-                    model: 'gemini-2.5-flash-native-audio-preview-09-2025',
-                    callbacks: {
-                        onopen: async () => {
-                            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                            mediaStreamRef.current = stream;
-                            outputAudioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
-                            outputNodeRef.current = outputAudioContextRef.current.createGain();
-                            outputNodeRef.current.connect(outputAudioContextRef.current.destination);
-                            inputAudioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
-                            const source = inputAudioContextRef.current.createMediaStreamSource(stream);
-                            const processor = inputAudioContextRef.current.createScriptProcessor(4096, 1, 1);
-                            scriptProcessorRef.current = processor;
-                            processor.onaudioprocess = (e) => {
-                                const inputData = e.inputBuffer.getChannelData(0);
-                                sessionPromise.then((session) => session.sendRealtimeInput({ media: createBlob(inputData) }));
-                            };
-                            source.connect(processor);
-                            processor.connect(inputAudioContextRef.current.destination);
-                        },
-                        onmessage: async (message: LiveServerMessage) => {
-                            if (message.serverContent?.inputTranscription) {
-                                const text = message.serverContent.inputTranscription.text;
-                                setMessages(prev => {
-                                    const last = prev[prev.length - 1];
-                                    if (last?.role === 'user' && currentTurnRef.current.user) {
-                                        last.content += text;
-                                        return [...prev];
-                                    } else {
-                                        const newUserMessage: ChatMessage = { role: 'user', content: text };
-                                        currentTurnRef.current.user = newUserMessage;
-                                        return [...prev, newUserMessage];
-                                    }
-                                });
-                            }
-                            if (message.serverContent?.outputTranscription) {
-                                const text = message.serverContent.outputTranscription.text;
-                                 setMessages(prev => {
-                                    const last = prev[prev.length - 1];
-                                    if (last?.role === 'model' && currentTurnRef.current.model) {
-                                        last.content += text;
-                                        return [...prev];
-                                    } else {
-                                        const newModelMessage: ChatMessage = { role: 'model', content: text };
-                                        currentTurnRef.current.model = newModelMessage;
-                                        return [...prev, newModelMessage];
-                                    }
-                                });
-                            }
-                            if (message.serverContent?.turnComplete) {
-                                currentTurnRef.current = { user: null, model: null };
-                            }
-                            const base64Audio = message.serverContent?.modelTurn?.parts[0]?.inlineData?.data;
-                            if (base64Audio && outputAudioContextRef.current && outputNodeRef.current) {
-                                const outCtx = outputAudioContextRef.current;
-                                nextStartTimeRef.current = Math.max(nextStartTimeRef.current, outCtx.currentTime);
-                                const audioBuffer = await decodeAudioData(decode(base64Audio), outCtx, 24000, 1);
-                                const source = outCtx.createBufferSource();
-                                source.buffer = audioBuffer;
-                                source.connect(outputNodeRef.current);
-                                source.addEventListener('ended', () => audioQueueRef.current.delete(source));
-                                source.start(nextStartTimeRef.current);
-                                nextStartTimeRef.current += audioBuffer.duration;
-                                audioQueueRef.current.add(source);
-                            }
-                        },
-                        onerror: (e) => { console.error('Live session error:', e); setIsVoiceChatActive(false); cleanupAudioResources(); },
-                        onclose: () => { setIsVoiceChatActive(false); cleanupAudioResources(); },
-                    },
-                    config: {
-                        responseModalities: [Modality.AUDIO],
-                        inputAudioTranscription: {},
-                        outputAudioTranscription: {},
-                        systemInstruction,
-                    },
-                });
-                sessionPromiseRef.current = sessionPromise;
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                
+                const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+                audioContextRef.current = audioContext;
+                const source = audioContext.createMediaStreamSource(stream);
+                const analyser = audioContext.createAnalyser();
+                source.connect(analyser);
+                setAnalyserNode(analyser);
+
+                const mimeTypes = ['audio/webm;codecs=opus', 'audio/ogg;codecs=opus', 'audio/webm', 'audio/ogg'];
+                const supportedMimeType = mimeTypes.find(type => MediaRecorder.isTypeSupported(type));
+                if (!supportedMimeType) {
+                    alert("Your browser doesn't support the required audio formats for recording.");
+                    return;
+                }
+                
+                mediaRecorderRef.current = new MediaRecorder(stream, { mimeType: supportedMimeType });
+                audioChunksRef.current = [];
+
+                mediaRecorderRef.current.ondataavailable = event => {
+                    if (event.data.size > 0) audioChunksRef.current.push(event.data);
+                };
+
+                mediaRecorderRef.current.onstop = async () => {
+                    setIsRecording(false);
+                    setIsTranscribing(true);
+
+                    const audioBlob = new Blob(audioChunksRef.current, { type: supportedMimeType });
+                    const reader = new FileReader();
+                    reader.readAsDataURL(audioBlob);
+                    reader.onloadend = async () => {
+                        const base64Audio = (reader.result as string).split(',')[1];
+                        try {
+                            const transcription = await transcribeAudio(base64Audio, audioBlob.type);
+                            setInput(prev => (prev ? prev + ' ' + transcription : transcription).trim());
+                            textareaRef.current?.focus();
+                        } catch (error) {
+                            console.error("Transcription error:", error);
+                            alert("Sorry, transcription failed.");
+                        } finally {
+                            setIsTranscribing(false);
+                        }
+                    };
+                    stream.getTracks().forEach(track => track.stop());
+                    audioContextRef.current?.close();
+                    audioContextRef.current = null;
+                    setAnalyserNode(null);
+                };
+
+                mediaRecorderRef.current.start();
+                setIsRecording(true);
             } catch (error) {
-                console.error("Error starting voice chat:", error);
-                alert("Could not start voice chat. Please ensure microphone permissions are granted.");
-                setIsVoiceChatActive(false);
+                console.error("Microphone access error:", error);
+                alert("Microphone access was denied. Please allow it in your browser settings.");
             }
         }
     };
@@ -288,28 +174,34 @@ const ChatInterface: React.FC<{ theme: Theme }> = ({ theme }) => {
                         onSubmit={handleSend} 
                         className="flex items-end gap-2"
                     >
-                        <textarea
-                            ref={textareaRef}
-                            rows={1}
-                            value={input}
-                            onChange={handleInput}
-                            onKeyDown={handleKeyDown}
-                            placeholder={isVoiceChatActive ? "Listening..." : "Ask a follow-up question..."}
-                            className="flex-grow w-full px-4 py-2.5 bg-stone-100 dark:bg-stone-800/80 border border-transparent focus:border-transparent focus:ring-2 focus:ring-sage rounded-xl text-stone-900 dark:text-stone-100 resize-none"
-                            disabled={isVoiceChatActive}
-                        />
+                        <div className="relative flex-grow">
+                            <textarea
+                                ref={textareaRef}
+                                rows={1}
+                                value={input}
+                                onChange={handleInput}
+                                onKeyDown={handleKeyDown}
+                                placeholder={isRecording ? "Recording..." : isTranscribing ? "Transcribing..." : "Ask a follow-up question..."}
+                                className="flex-grow w-full px-4 py-2.5 bg-stone-100 dark:bg-stone-800/80 border border-transparent focus:border-transparent focus:ring-2 focus:ring-sage rounded-xl text-stone-900 dark:text-stone-100 resize-none"
+                                disabled={isLoading || isRecording || isTranscribing}
+                            />
+                            <div className="absolute bottom-1 left-2 right-2 pointer-events-none">
+                                <Waveform analyserNode={analyserNode} isRecording={isRecording} />
+                            </div>
+                        </div>
                         <button
                             type="button"
-                            onClick={handleToggleVoiceChat}
+                            onClick={handleToggleRecording}
+                            disabled={isLoading || isTranscribing}
                             className={`flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors
-                            ${isVoiceChatActive ? 'text-red-500 bg-red-500/10' : 'text-stone-500'}`}
-                            aria-label={isVoiceChatActive ? 'Stop voice chat' : 'Start voice chat'}
+                            ${isRecording ? 'text-red-500 bg-red-500/10' : 'text-stone-500'} ${isTranscribing ? 'cursor-not-allowed' : ''}`}
+                            aria-label={isRecording ? 'Stop recording' : 'Start recording'}
                         >
-                             <MicIcon className="w-5 h-5" />
+                             {isTranscribing ? <div className="w-5 h-5 border-2 border-stone-400/50 border-t-stone-500 rounded-full animate-spin"></div> : isRecording ? <StopIcon className="w-5 h-5"/> : <MicIcon className="w-5 h-5" />}
                         </button>
                         <button
                             type="submit"
-                            disabled={!input.trim() || isLoading || isVoiceChatActive}
+                            disabled={!input.trim() || isLoading || isRecording || isTranscribing}
                             className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full bg-sage hover:brightness-105 text-white transition-all duration-200 disabled:bg-stone-400 dark:disabled:bg-stone-600 disabled:cursor-not-allowed"
                             aria-label="Send message"
                         >

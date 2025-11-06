@@ -4,6 +4,7 @@ import { MicIcon } from './icons/MicIcon';
 import { StopIcon } from './icons/StopIcon';
 import { BrainIcon } from './icons/BrainIcon';
 import { UserIcon } from './icons/UserIcon';
+import { Waveform } from './Waveform';
 
 // --- Audio Encoding & Decoding Helpers for Gemini Live API ---
 function encode(bytes: Uint8Array): string {
@@ -68,6 +69,7 @@ export const ConversationView: React.FC = () => {
     const [isConnected, setIsConnected] = useState(false);
     const [conversationHistory, setConversationHistory] = useState<Turn[]>([]);
     const [currentTurn, setCurrentTurn] = useState<Omit<Turn, 'id'>>({ user: '', model: '' });
+    const [analyserNode, setAnalyserNode] = useState<AnalyserNode | null>(null);
 
     const sessionPromiseRef = useRef<Promise<LiveSession> | null>(null);
     const mediaStreamRef = useRef<MediaStream | null>(null);
@@ -96,7 +98,8 @@ export const ConversationView: React.FC = () => {
             source.stop();
         }
         audioQueueRef.current.clear();
-
+        
+        setAnalyserNode(null);
         sessionPromiseRef.current = null;
         mediaStreamRef.current = null;
         inputAudioContextRef.current = null;
@@ -150,6 +153,9 @@ export const ConversationView: React.FC = () => {
                         const processor = inContext.createScriptProcessor(4096, 1, 1);
                         scriptProcessorRef.current = processor;
 
+                        const analyser = inContext.createAnalyser();
+                        setAnalyserNode(analyser);
+
                         processor.onaudioprocess = (audioProcessingEvent) => {
                             const inputData = audioProcessingEvent.inputBuffer.getChannelData(0);
                             const pcmBlob = createBlob(inputData);
@@ -157,7 +163,8 @@ export const ConversationView: React.FC = () => {
                                 session.sendRealtimeInput({ media: pcmBlob });
                             });
                         };
-                        source.connect(processor);
+                        source.connect(analyser);
+                        analyser.connect(processor);
                         processor.connect(inContext.destination);
                     },
                     onmessage: async (message: LiveServerMessage) => {
@@ -272,6 +279,9 @@ export const ConversationView: React.FC = () => {
                 {renderTurn(currentTurn, 'current', true)}
             </div>
             <div className="flex-shrink-0 pt-6 mt-4 border-t border-stone-200 dark:border-stone-800 flex flex-col items-center">
+                <div className="w-full max-w-xs h-10 mb-2">
+                    <Waveform analyserNode={analyserNode} isRecording={isConnected} />
+                </div>
                 <button
                     onClick={handleToggleConnection}
                     disabled={isConnecting}

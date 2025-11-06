@@ -158,6 +158,30 @@ export const chatWithTheme = async (theme: Theme, history: ChatMessage[], newMes
     }
 };
 
+export const transcribeAudio = async (audioBase64: string, mimeType: string): Promise<string> => {
+    try {
+        const audioPart = {
+            inlineData: {
+                data: audioBase64,
+                mimeType,
+            },
+        };
+        const textPart = {
+            text: "Transcribe this audio recording accurately. Only return the transcribed text, without any introductory phrases like 'The transcription is:'.",
+        };
+
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: { parts: [audioPart, textPart] },
+        });
+
+        return response.text;
+    } catch (error) {
+        console.error("Error transcribing audio:", error);
+        throw new Error("Failed to transcribe audio.");
+    }
+};
+
 const searchSchema = {
     type: Type.OBJECT,
     properties: {
