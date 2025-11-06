@@ -15,6 +15,15 @@ interface ThemeDetailProps {
   onAddIdeaAtom: (themeId: string, content: string) => void;
 }
 
+const SuggestionChip: React.FC<{ text: string, onClick: (text: string) => void }> = ({ text, onClick }) => (
+    <button 
+        onClick={() => onClick(text)}
+        className="px-4 py-2 bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 rounded-full hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors text-sm"
+    >
+        {text}
+    </button>
+);
+
 const ChatInterface: React.FC<{ theme: Theme }> = ({ theme }) => {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [input, setInput] = useState('');
@@ -34,11 +43,11 @@ const ChatInterface: React.FC<{ theme: Theme }> = ({ theme }) => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
-    const handleSend = async (e?: React.FormEvent) => {
-        if (e) e.preventDefault();
-        if (!input.trim() || isLoading || isRecording || isTranscribing) return;
+    const handleSend = async (messageContent?: string) => {
+        const contentToSend = (messageContent || input).trim();
+        if (!contentToSend || isLoading || isRecording || isTranscribing) return;
 
-        const userMessage: ChatMessage = { role: 'user', content: input };
+        const userMessage: ChatMessage = { role: 'user', content: contentToSend };
         setMessages(prev => [...prev, userMessage]);
         setInput('');
         setIsLoading(true);
@@ -46,16 +55,22 @@ const ChatInterface: React.FC<{ theme: Theme }> = ({ theme }) => {
         if (textareaRef.current) textareaRef.current.style.height = 'auto';
 
         try {
-            const response = await chatWithTheme(theme, [...messages, userMessage], input);
+            const response = await chatWithTheme(theme, [...messages, userMessage], contentToSend);
             const modelMessage: ChatMessage = { role: 'model', content: response };
             setMessages(prev => [...prev, modelMessage]);
-        } catch (error) {
+        } catch (error)
+ {
             console.error(error);
             const errorMessage: ChatMessage = { role: 'model', content: 'Sorry, I had trouble responding. Please try again.' };
             setMessages(prev => [...prev, errorMessage]);
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const handleFormSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        handleSend();
     };
 
     const handleToggleRecording = async () => {
@@ -136,83 +151,90 @@ const ChatInterface: React.FC<{ theme: Theme }> = ({ theme }) => {
         target.style.height = `${Math.min(target.scrollHeight, maxHeight)}px`;
     };
 
-    return (
-        <div className="mt-8">
-            <h3 className="text-xl font-semibold mb-4 text-stone-800 dark:text-stone-200">Chat with this theme</h3>
-            <div className="border border-stone-200 dark:border-stone-800 rounded-lg shadow-sm flex flex-col bg-white dark:bg-stone-900 h-[70vh] max-h-[800px]">
-                <div className="flex-grow overflow-y-auto p-6 space-y-6">
-                    {messages.length === 0 && !isLoading && (
-                         <div className="flex flex-col items-center justify-center h-full text-center text-stone-500 dark:text-stone-400">
-                            <BrainIcon className="w-12 h-12 mb-2 text-stone-300 dark:text-stone-600" />
-                            <p>Ask questions or brainstorm ideas about this theme.</p>
-                            <p className="text-sm">You can type or use the microphone.</p>
-                        </div>
-                    )}
-                    
-                    {messages.map((msg, index) => (
-                        <div key={index} className={`flex items-start gap-3 my-4 ${msg.role === 'user' ? 'justify-end' : ''}`}>
-                             {msg.role === 'model' && <div className="flex-shrink-0 w-8 h-8 rounded-full bg-sage text-white flex items-center justify-center"><BrainIcon className="w-5 h-5"/></div>}
-                             <div className={`max-w-xl p-3 rounded-xl ${msg.role === 'user' ? 'bg-sage text-white' : 'bg-stone-100 dark:bg-stone-800 text-stone-800 dark:text-stone-200'}`}>
-                                {msg.content}
-                            </div>
-                            {msg.role === 'user' && <div className="flex-shrink-0 w-8 h-8 rounded-full bg-stone-200 dark:bg-stone-700 text-stone-600 dark:text-stone-300 flex items-center justify-center"><UserIcon className="w-5 h-5"/></div>}
-                        </div>
-                    ))}
-                    {isLoading && (
-                        <div className="flex items-start gap-3 my-4">
-                            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-sage text-white flex items-center justify-center"><BrainIcon className="w-5 h-5 animate-pulse"/></div>
-                            <div className="max-w-md p-3 rounded-xl bg-stone-100 dark:bg-stone-800">
-                            <div className="h-2 bg-stone-300 dark:bg-stone-600 rounded-full w-24 animate-pulse"></div>
-                            </div>
-                        </div>
-                    )}
-                    <div ref={chatEndRef} />
-                </div>
+    const initialSuggestions = [
+        "What are the first steps?",
+        "Identify potential risks.",
+        "Who is the target audience?",
+        "Brainstorm some alternative names.",
+    ];
 
-                <div className="flex-shrink-0 p-4 border-t border-stone-200 dark:border-stone-800">
-                    <form 
-                        onSubmit={handleSend} 
-                        className="flex items-end gap-2"
-                    >
-                        <div className="relative flex-grow">
-                            <textarea
-                                ref={textareaRef}
-                                rows={1}
-                                value={input}
-                                onChange={handleInput}
-                                onKeyDown={handleKeyDown}
-                                placeholder={isRecording ? "Recording..." : isTranscribing ? "Transcribing..." : "Ask a follow-up question..."}
-                                className="flex-grow w-full px-4 py-2.5 bg-stone-100 dark:bg-stone-800/80 border border-transparent focus:border-transparent focus:ring-2 focus:ring-sage rounded-xl text-stone-900 dark:text-stone-100 resize-none"
-                                disabled={isLoading || isRecording || isTranscribing}
-                            />
-                            <div className="absolute bottom-1 left-2 right-2 pointer-events-none">
-                                <Waveform analyserNode={analyserNode} isRecording={isRecording} />
-                            </div>
+    return (
+        <div className="mt-12">
+            <div className="w-full max-w-3xl mx-auto space-y-6 pb-28">
+                {messages.length === 0 && !isLoading && (
+                     <div className="text-center pt-8 pb-4">
+                        <h2 className="text-2xl font-bold text-stone-800 dark:text-stone-200">Chat about "{theme.title}"</h2>
+                        <p className="text-stone-500 dark:text-stone-400 mt-2">Start a conversation or use a suggestion below.</p>
+                        <div className="flex flex-wrap gap-2 justify-center mt-6">
+                            {initialSuggestions.map(text => <SuggestionChip key={text} text={text} onClick={() => handleSend(text)} />)}
                         </div>
-                        <button
+                    </div>
+                )}
+                
+                {messages.map((msg, index) => (
+                    <div key={index} className={`flex items-start gap-3 w-full ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                         {msg.role === 'model' && <div className="flex-shrink-0 w-8 h-8 rounded-full bg-sage text-white flex items-center justify-center"><BrainIcon className="w-5 h-5"/></div>}
+                         <div className={`max-w-xl p-3 rounded-xl whitespace-pre-wrap ${msg.role === 'user' ? 'bg-sage text-white' : 'bg-white dark:bg-stone-800 text-stone-800 dark:text-stone-200 border border-stone-200 dark:border-stone-700/80'}`}>
+                            {msg.content}
+                        </div>
+                        {msg.role === 'user' && <div className="flex-shrink-0 w-8 h-8 rounded-full bg-stone-200 dark:bg-stone-700 text-stone-600 dark:text-stone-300 flex items-center justify-center"><UserIcon className="w-5 h-5"/></div>}
+                    </div>
+                ))}
+                {isLoading && (
+                    <div className="flex items-start gap-3 justify-start">
+                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-sage text-white flex items-center justify-center"><BrainIcon className="w-5 h-5 animate-pulse"/></div>
+                        <div className="max-w-md p-3 rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700/80">
+                        <div className="h-2 bg-stone-300 dark:bg-stone-600 rounded-full w-24 animate-pulse"></div>
+                        </div>
+                    </div>
+                )}
+                <div ref={chatEndRef} />
+            </div>
+
+            <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-stone-50 dark:from-stone-900 to-transparent pointer-events-none h-32"></div>
+            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-3xl px-4">
+                 <form 
+                    onSubmit={handleFormSubmit} 
+                    className="relative flex items-end gap-2 bg-white dark:bg-stone-800/90 backdrop-blur-sm border border-stone-200 dark:border-stone-700 rounded-2xl shadow-lg p-2"
+                >
+                    <div className="relative flex-grow">
+                        <textarea
+                            ref={textareaRef}
+                            rows={1}
+                            value={input}
+                            onChange={handleInput}
+                            onKeyDown={handleKeyDown}
+                            placeholder={isRecording ? "Recording..." : isTranscribing ? "Transcribing..." : "Chat about this theme..."}
+                            className="flex-grow w-full pl-3 pr-10 py-2.5 bg-transparent focus:outline-none text-stone-900 dark:text-stone-100 resize-none"
+                            disabled={isLoading || isRecording || isTranscribing}
+                        />
+                         <button
                             type="button"
                             onClick={handleToggleRecording}
                             disabled={isLoading || isTranscribing}
-                            className={`flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors
+                            className={`absolute right-1 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-full hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors
                             ${isRecording ? 'text-red-500 bg-red-500/10' : 'text-stone-500'} ${isTranscribing ? 'cursor-not-allowed' : ''}`}
                             aria-label={isRecording ? 'Stop recording' : 'Start recording'}
                         >
                              {isTranscribing ? <div className="w-5 h-5 border-2 border-stone-400/50 border-t-stone-500 rounded-full animate-spin"></div> : isRecording ? <StopIcon className="w-5 h-5"/> : <MicIcon className="w-5 h-5" />}
                         </button>
-                        <button
-                            type="submit"
-                            disabled={!input.trim() || isLoading || isRecording || isTranscribing}
-                            className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full bg-sage hover:brightness-105 text-white transition-all duration-200 disabled:bg-stone-400 dark:disabled:bg-stone-600 disabled:cursor-not-allowed"
-                            aria-label="Send message"
-                        >
-                            {isLoading ? (
-                                <div className="w-5 h-5 border-2 border-white/50 border-t-white rounded-full animate-spin"></div>
-                            ) : (
-                                <SendIcon className="w-5 h-5" />
-                            )}
-                        </button>
-                    </form>
-                </div>
+                        <div className="absolute bottom-1 left-2 right-2 pointer-events-none">
+                            <Waveform analyserNode={analyserNode} isRecording={isRecording} />
+                        </div>
+                    </div>
+                    <button
+                        type="submit"
+                        disabled={!input.trim() || isLoading || isRecording || isTranscribing}
+                        className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-sage hover:brightness-105 text-white transition-all duration-200 disabled:bg-stone-400 dark:disabled:bg-stone-600 disabled:cursor-not-allowed"
+                        aria-label="Send message"
+                    >
+                        {isLoading ? (
+                            <div className="w-5 h-5 border-2 border-white/50 border-t-white rounded-full animate-spin"></div>
+                        ) : (
+                            <SendIcon className="w-5 h-5" />
+                        )}
+                    </button>
+                </form>
             </div>
         </div>
     );
