@@ -2,19 +2,32 @@ import React from 'react';
 import { RawIdea } from '../types';
 import { IdeaCard } from './IdeaCard';
 
+type DraggedItem = { type: 'idea' | 'theme'; id: string };
+
 interface IdeasListProps {
   ideas: RawIdea[];
   onDeleteIdea: (id: string) => void;
   onChatWithIdea: (id: string) => void;
   filterIds?: string[];
+  onReorder: (draggedId: string, targetId: string) => void;
+  draggedItem: DraggedItem | null;
+  setDraggedItem: (item: DraggedItem | null) => void;
 }
 
-export const IdeasList: React.FC<IdeasListProps> = ({ ideas, onDeleteIdea, onChatWithIdea, filterIds }) => {
+export const IdeasList: React.FC<IdeasListProps> = ({ 
+  ideas, 
+  onDeleteIdea, 
+  onChatWithIdea, 
+  filterIds,
+  onReorder,
+  draggedItem,
+  setDraggedItem
+}) => {
   const isSearching = filterIds !== undefined;
 
-  const sortedIdeas = [...ideas]
-    .filter(idea => isSearching ? filterIds.includes(idea.id) : true)
-    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  const displayedIdeas = isSearching
+    ? [...ideas].filter(idea => filterIds.includes(idea.id))
+    : [...ideas].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
   return (
     <div className="p-4 md:p-6">
@@ -38,14 +51,22 @@ export const IdeasList: React.FC<IdeasListProps> = ({ ideas, onDeleteIdea, onCha
         </div>
       )}
       <div className="space-y-4">
-        {sortedIdeas.length === 0 ? (
+        {displayedIdeas.length === 0 ? (
            <div className="text-center py-16 text-gray-500 dark:text-gray-400">
              <h3 className="text-lg font-semibold">{isSearching ? 'No ideas found' : 'No ideas yet!'}</h3>
              <p>{isSearching ? 'Your search did not match any ideas.' : 'Use the input above to capture your first thought.'}</p>
            </div>
         ) : (
-            sortedIdeas.map(idea => (
-                <IdeaCard key={idea.id} idea={idea} onDelete={onDeleteIdea} onChat={onChatWithIdea} />
+            displayedIdeas.map(idea => (
+                <IdeaCard 
+                  key={idea.id} 
+                  idea={idea} 
+                  onDelete={onDeleteIdea} 
+                  onChat={onChatWithIdea}
+                  onReorder={onReorder}
+                  draggedItem={draggedItem}
+                  setDraggedItem={setDraggedItem}
+                />
             ))
         )}
       </div>

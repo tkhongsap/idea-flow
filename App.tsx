@@ -13,6 +13,7 @@ import { XIcon } from './components/icons/XIcon';
 
 type View = 'ideas' | 'themes';
 type SearchResults = { ideaIds: string[]; themeIds: string[] } | null;
+type DraggedItem = { type: 'idea' | 'theme'; id: string };
 
 const App: React.FC = () => {
     const [rawIdeas, setRawIdeas] = useState<RawIdea[]>(() => {
@@ -44,6 +45,10 @@ const App: React.FC = () => {
     const [isSearching, setIsSearching] = useState(false);
     const [searchResults, setSearchResults] = useState<SearchResults>(null);
     const searchInputRef = useRef<HTMLInputElement>(null);
+
+    // Drag and Drop State
+    const [draggedItem, setDraggedItem] = useState<DraggedItem | null>(null);
+    const [dragOverItem, setDragOverItem] = useState<DraggedItem | null>(null);
 
 
     // Auto-save to localStorage whenever ideas or themes change
@@ -208,6 +213,55 @@ const App: React.FC = () => {
         setSearchQuery('');
         setSearchResults(null);
     };
+    
+    // --- Drag and Drop Handlers ---
+    const handleAddIdeaToTheme = (ideaId: string, themeId: string) => {
+        const idea = rawIdeas.find(i => i.id === ideaId);
+        if (!idea) return;
+
+        const newAtom: IdeaAtom = {
+            id: `atom-manual-${Date.now()}`,
+            content: idea.content,
+            sourceIdeaId: idea.id,
+        };
+
+        setThemes(prevThemes => prevThemes.map(theme => {
+            if (theme.id === themeId) {
+                if (theme.ideaAtoms.some(atom => atom.sourceIdeaId === ideaId)) {
+                    return theme; // Avoid duplicates
+                }
+                return { ...theme, ideaAtoms: [...theme.ideaAtoms, newAtom] };
+            }
+            return theme;
+        }));
+    };
+
+    const handleReorderIdeas = (draggedId: string, targetId: string) => {
+        if (draggedId === targetId) return;
+        setRawIdeas(prevIdeas => {
+            const draggedIndex = prevIdeas.findIndex(i => i.id === draggedId);
+            const targetIndex = prevIdeas.findIndex(i => i.id === targetId);
+            if (draggedIndex === -1 || targetIndex === -1) return prevIdeas;
+            const newIdeas = [...prevIdeas];
+            const [removed] = newIdeas.splice(draggedIndex, 1);
+            newIdeas.splice(targetIndex, 0, removed);
+            return newIdeas;
+        });
+    };
+
+    const handleReorderThemes = (draggedId: string, targetId: string) => {
+         if (draggedId === targetId) return;
+         setThemes(prevThemes => {
+            const draggedIndex = prevThemes.findIndex(t => t.id === draggedId);
+            const targetIndex = prevThemes.findIndex(t => t.id === targetId);
+            if (draggedIndex === -1 || targetIndex === -1) return prevThemes;
+            const newThemes = [...prevThemes];
+            const [removed] = newThemes.splice(draggedIndex, 1);
+            newThemes.splice(targetIndex, 0, removed);
+            return newThemes;
+         });
+    };
+    // --- End Drag and Drop Handlers ---
 
     const renderView = () => {
         if (selectedTheme) {
@@ -225,8 +279,31 @@ const App: React.FC = () => {
             return (
                 <div className="p-4 md:p-6">
                     <h2 className="text-2xl font-bold mb-4">Search Results for "{searchQuery}"</h2>
-                    {searchResults.ideaIds.length > 0 && <IdeasList ideas={rawIdeas} onDeleteIdea={handleDeleteIdea} onChatWithIdea={handleChatWithIdea} filterIds={searchResults.ideaIds} />}
-                    {searchResults.themeIds.length > 0 && <ThemeList themes={themes} onSelectTheme={handleSelectTheme} onOpenCreateThemeModal={() => setIsCreateThemeModalOpen(true)} filterIds={searchResults.themeIds} />}
+                    {searchResults.ideaIds.length > 0 && 
+                        <IdeasList 
+                            ideas={rawIdeas} 
+                            onDeleteIdea={handleDeleteIdea} 
+                            onChatWithIdea={handleChatWithIdea} 
+                            filterIds={searchResults.ideaIds} 
+                            onReorder={handleReorderIdeas} 
+                            draggedItem={draggedItem}
+                            setDraggedItem={setDraggedItem}
+                        />
+                    }
+                    {searchResults.themeIds.length > 0 && 
+                        <ThemeList 
+                            themes={themes} 
+                            onSelectTheme={handleSelectTheme} 
+                            onOpenCreateThemeModal={() => setIsCreateThemeModalOpen(true)} 
+                            filterIds={searchResults.themeIds}
+                            onAddIdeaToTheme={handleAddIdeaToTheme}
+                            onReorder={handleReorderThemes}
+                            draggedItem={draggedItem}
+                            setDraggedItem={setDraggedItem}
+                            dragOverItem={dragOverItem}
+                            setDragOverItem={setDragOverItem}
+                        />
+                    }
                     {(searchResults.ideaIds.length === 0 && searchResults.themeIds.length === 0) && (
                         <div className="text-center py-16 text-gray-500 dark:text-gray-400">
                           <h3 className="text-lg font-semibold">No results found</h3>
@@ -240,9 +317,26 @@ const App: React.FC = () => {
 
         switch (view) {
             case 'ideas':
-                return <IdeasList ideas={rawIdeas} onDeleteIdea={handleDeleteIdea} onChatWithIdea={handleChatWithIdea} />;
+                return <IdeasList 
+                            ideas={rawIdeas} 
+                            onDeleteIdea={handleDeleteIdea} 
+                            onChatWithIdea={handleChatWithIdea}
+                            onReorder={handleReorderIdeas}
+                            draggedItem={draggedItem}
+                            setDraggedItem={setDraggedItem}
+                        />;
             case 'themes':
-                return <ThemeList themes={themes} onSelectTheme={handleSelectTheme} onOpenCreateThemeModal={() => setIsCreateThemeModalOpen(true)} />;
+                return <ThemeList 
+                            themes={themes} 
+                            onSelectTheme={handleSelectTheme} 
+                            onOpenCreateThemeModal={() => setIsCreateThemeModalOpen(true)}
+                            onAddIdeaToTheme={handleAddIdeaToTheme}
+                            onReorder={handleReorderThemes}
+                            draggedItem={draggedItem}
+                            setDraggedItem={setDraggedItem}
+                            dragOverItem={dragOverItem}
+                            setDragOverItem={setDragOverItem}
+                        />;
             default:
                 return null;
         }

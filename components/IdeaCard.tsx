@@ -6,17 +6,65 @@ import { MicIcon } from './icons/MicIcon';
 import { ChatIcon } from './icons/ChatIcon';
 import { TrashIcon } from './icons/TrashIcon';
 
+type DraggedItem = { type: 'idea' | 'theme'; id: string };
+
 interface IdeaCardProps {
   idea: RawIdea;
   onDelete: (id: string) => void;
   onChat: (id: string) => void;
+  onReorder: (draggedId: string, targetId: string) => void;
+  draggedItem: DraggedItem | null;
+  setDraggedItem: (item: DraggedItem | null) => void;
 }
 
-export const IdeaCard: React.FC<IdeaCardProps> = ({ idea, onDelete, onChat }) => {
+export const IdeaCard: React.FC<IdeaCardProps> = ({ 
+  idea, 
+  onDelete, 
+  onChat, 
+  onReorder,
+  draggedItem,
+  setDraggedItem
+}) => {
   const SourceIcon = idea.sourceType === 'voice' ? MicIcon : TextIcon;
 
+  const handleDragStart = (e: React.DragEvent, idea: RawIdea) => {
+    // FIX: Explicitly type the payload to ensure it matches the DraggedItem type.
+    const payload: DraggedItem = { type: 'idea', id: idea.id };
+    e.dataTransfer.setData('application/json', JSON.stringify(payload));
+    setDraggedItem(payload);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e: React.DragEvent, targetIdea: RawIdea) => {
+      e.preventDefault();
+      try {
+        const payload = JSON.parse(e.dataTransfer.getData('application/json'));
+        if (payload.type === 'idea' && payload.id) {
+            onReorder(payload.id, targetIdea.id);
+        }
+      } catch (error) {
+        console.error("Failed to parse drag data:", error);
+      }
+  };
+
+  const handleDragEnd = () => {
+      setDraggedItem(null);
+  };
+
   return (
-    <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 flex flex-col gap-3">
+    <div 
+      draggable="true"
+      onDragStart={(e) => handleDragStart(e, idea)}
+      onDragOver={handleDragOver}
+      onDrop={(e) => handleDrop(e, idea)}
+      onDragEnd={handleDragEnd}
+      className={`bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 flex flex-col gap-3 cursor-grab active:cursor-grabbing transition-opacity
+        ${draggedItem?.id === idea.id ? 'opacity-40' : 'opacity-100'}
+      `}
+    >
       <p className="text-gray-800 dark:text-gray-200">{idea.content}</p>
       
       <div className="flex items-center gap-2 flex-wrap">
