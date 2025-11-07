@@ -57,10 +57,31 @@ IdeaFlow is a React-based web application that helps you capture and organize yo
 - **Build**: `npm run build`
 - **Run**: `npx vite preview --host 0.0.0.0 --port 5000`
 
-## Recent Changes (November 6, 2025)
+## Recent Changes
+
+### November 7, 2025 - Security Architecture Update
+- **Fixed critical security vulnerability**: API key no longer exposed in frontend bundle
+- Implemented secure backend proxy architecture:
+  - Created Express.js backend API (`backend/` folder)
+  - Backend proxies all Gemini API calls securely
+  - API key stored only in backend Replit Secrets (never sent to browser)
+  - Strict CORS policy: only specific frontend URL can access API
+  - Rate limiting: 100 requests per 15 minutes per IP
+  - Request validation on all endpoints
+- Deployment architecture: Two Replit apps (one Git repo)
+  - Frontend app: React + Vite on port 5000
+  - Backend app: Express API on port 3000 (separate Replit deployment)
+  - Backend URL configured via `VITE_BACKEND_API_URL` secret
+- Updated frontend services to call backend API instead of direct Gemini calls
+- Created comprehensive deployment documentation:
+  - `DEPLOYMENT_GUIDE.md` - Step-by-step setup instructions
+  - `POST_DEPLOYMENT_CHECKLIST.md` - Testing verification
+  - `BACKEND_SETUP.md` - Technical reference
+  - `API_SECURITY_FIX_SUMMARY.md` - Overview of changes
+
+### November 6, 2025 - Initial Setup
 - Configured Vite to run on port 5000 for Replit compatibility
 - Added `allowedHosts: true` to Vite config for proxy support
-- Set up GEMINI_API_KEY environment variable
 - Configured workflow and deployment settings
 
 ## Data Storage
