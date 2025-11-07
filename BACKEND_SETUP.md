@@ -1,6 +1,8 @@
-# IdeaFlow API Security Fix - Backend Setup Guide
+# IdeaFlow Backend Setup - Quick Reference
 
-This guide explains how to set up the secure backend API for IdeaFlow.
+> 📘 **For full deployment instructions, see [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)**
+
+This document provides technical details about the backend architecture. For step-by-step deployment instructions, use the main deployment guide.
 
 ## 🔒 Security Issue Fixed
 
