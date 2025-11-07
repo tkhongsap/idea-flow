@@ -43,23 +43,26 @@ This guide walks you through deploying IdeaFlow with the secure backend architec
 
 ### 1.2 Upload Backend Files
 
-In your new backend Replit, you need to upload the `backend/` folder contents:
+In your new backend Replit, you need to upload the `backend/` folder contents to the **project root**:
 
-**Option A: Copy Files Manually**
-1. In the backend Replit, create these files:
-   - `server.js` (copy from `backend/server.js`)
-   - `package.json` (copy from `backend/package.json`)
-   - `.replit` (copy from `backend/.replit`)
-   - `replit.nix` (copy from `backend/replit.nix`)
-   - `.gitignore` (copy from `backend/.gitignore`)
+**Option A: Copy Files Manually** (Recommended)
+1. In the backend Replit, create these files in the **root directory**:
+   - `server.js` (copy content from `backend/server.js`)
+   - `package.json` (copy content from `backend/package.json`)
+   - `.replit` (copy content from `backend/.replit`)
+   - `replit.nix` (copy content from `backend/replit.nix`)
+   - `.gitignore` (copy content from `backend/.gitignore`)
 
-**Option B: Clone Repo and Navigate**
+**Option B: Clone Repo and Copy to Root**
 1. In the backend Replit Shell, run:
    ```bash
    git clone <your-repo-url>
-   cd <repo-name>/backend
+   cp <repo-name>/backend/* .
+   cp <repo-name>/backend/.* . 2>/dev/null || true
    npm install
    ```
+
+> ⚠️ **Important:** The backend files must be in the **project root** (not in a subfolder) for Replit's Run and Deploy buttons to work correctly.
 
 ---
 
@@ -95,13 +98,22 @@ npm install
 
 ### 3.2 Test Locally
 
+**First, verify your project structure:**
+1. In the backend Replit, confirm these files are in the **root directory**:
+   - ✅ `server.js`
+   - ✅ `package.json`
+   - ✅ `.replit`
+   - ✅ `replit.nix`
+
+**Start the server:**
 Click the **"Run"** button. You should see:
 ```
-IdeaFlow Backend API running on port 3000
-Environment: development
+✅ IdeaFlow Backend API running on port 3000
+🔒 API Key configured: Yes
+🌐 Frontend URL: [your-frontend-url]
 ```
 
-Test the health endpoint:
+**Test the health endpoint:**
 ```bash
 curl http://localhost:3000/health
 ```
@@ -110,6 +122,8 @@ Should return:
 ```json
 {"status":"ok","timestamp":"..."}
 ```
+
+> ⚠️ **If the Run button doesn't start the server:** Check that `server.js` and `.replit` are in the project root, not in a `backend/` subfolder.
 
 ### 3.3 Deploy to Production
 
